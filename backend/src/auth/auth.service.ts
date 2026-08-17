@@ -107,6 +107,30 @@ export class AuthService implements OnModuleInit {
     };
   }
 
+  async resetPassword(dto: { email: string; newPassword: string }) {
+    const cleanEmail = (dto.email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      throw new NotFoundException('Email address is required.');
+    }
+
+    const user = await this.userModel.findOne({ email: cleanEmail });
+    if (!user) {
+      throw new NotFoundException('No account found with this email address.');
+    }
+
+    if (!dto.newPassword || dto.newPassword.trim().length < 4) {
+      throw new ConflictException('New password must be at least 4 characters.');
+    }
+
+    user.password = dto.newPassword.trim();
+    await user.save();
+
+    return {
+      success: true,
+      message: 'Password reset successfully! You can now log in with your new password.',
+    };
+  }
+
   async getProfile(email: string) {
     const user = await this.userModel.findOne({
       email: email.toLowerCase().trim(),
@@ -140,7 +164,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async updateUser(id: string, updateData: { name?: string; email?: string; password?: string; role?: string; phone?: string; status?: string }) {
-    let user = null;
+    let user: any = null;
     if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
       user = await this.userModel.findById(id);
     }
@@ -172,7 +196,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async deleteUser(id: string) {
-    let res = null;
+    let res: any = null;
     if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
       res = await this.userModel.findByIdAndDelete(id);
     }

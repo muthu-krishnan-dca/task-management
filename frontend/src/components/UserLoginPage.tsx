@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AuthUser, loginUser, registerUser } from "@/utils/authStore";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
 import Link from "next/link";
 
 interface UserLoginPageProps {
@@ -16,6 +17,7 @@ export function UserLoginPage({
   onGoToAdminLogin,
 }: UserLoginPageProps) {
   const [isRegisterMode, setIsRegisterMode] = useState(initialMode === "register");
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   // Form states
   const [name, setName] = useState("");
@@ -294,16 +296,13 @@ export function UserLoginPage({
                 <span>Remember me</span>
               </label>
 
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert("Password reset instructions sent to your email!");
-                }}
-                className="font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="font-semibold text-violet-600 dark:text-violet-400 hover:underline text-[11px] cursor-pointer"
               >
                 Forgot Password?
-              </a>
+              </button>
             </div>
           )}
 
@@ -341,6 +340,19 @@ export function UserLoginPage({
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <ForgotPasswordModal
+          initialEmail={email}
+          onClose={() => setShowForgotModal(false)}
+          onSuccess={(resetEmail, newPass) => {
+            setEmail(resetEmail);
+            setPassword(newPass);
+            setSuccessMessage("Password reset successfully! Click Login to enter.");
+          }}
+        />
+      )}
     </div>
   );
 }

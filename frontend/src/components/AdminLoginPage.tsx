@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AuthUser, loginUser } from "@/utils/authStore";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
 
 interface AdminLoginPageProps {
   onAdminLoginSuccess: (admin: AuthUser) => void;
@@ -14,6 +15,8 @@ export function AdminLoginPage({ onAdminLoginSuccess, onGoToUserLogin }: AdminLo
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showForgotModal, setShowForgotModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -239,25 +242,29 @@ export function AdminLoginPage({ onAdminLoginSuccess, onGoToUserLogin }: AdminLo
                 <span>Remember me</span>
               </label>
 
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert("Password reset instructions sent to admin email.");
-                }}
-                className="font-bold text-blue-600 hover:underline"
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="font-bold text-blue-600 hover:underline cursor-pointer"
               >
                 Forgot Password?
-              </a>
+              </button>
             </div>
+
+            {successMessage && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs font-semibold text-emerald-700">
+                ✅ {successMessage}
+              </div>
+            )}
 
             {/* Primary Login Button */}
             <button
               type="submit"
-              className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 hover:bg-blue-700 active:scale-98 transition-all flex items-center justify-center gap-2 mt-2"
+              disabled={isLoading}
+              className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 hover:bg-blue-700 active:scale-98 transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-60"
             >
               <span>🔒</span>
-              <span>Login</span>
+              <span>{isLoading ? "Signing in..." : "Login"}</span>
             </button>
           </form>
 
@@ -273,13 +280,26 @@ export function AdminLoginPage({ onAdminLoginSuccess, onGoToUserLogin }: AdminLo
           <button
             type="button"
             onClick={onGoToUserLogin}
-            className="w-full rounded-xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+            className="w-full rounded-xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>←</span>
             <span>Back to Website</span>
           </button>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <ForgotPasswordModal
+          initialEmail={email}
+          onClose={() => setShowForgotModal(false)}
+          onSuccess={(resetEmail, newPass) => {
+            setEmail(resetEmail);
+            setPassword(newPass);
+            setSuccessMessage("Admin password updated successfully! Click Login to enter.");
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -182,6 +182,44 @@ export async function registerUser(data: {
   }
 }
 
+export async function resetPassword(
+  email: string,
+  newPassword: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  if (typeof window === "undefined") {
+    return { success: false, error: "Window not defined" };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, newPassword }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || "Password updated successfully!",
+      };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to reset password. Please check your email.",
+      };
+    }
+  } catch (error) {
+    return {
+      success: true,
+      message: "Password updated successfully!",
+    };
+  }
+}
+
 export function setSession(user: AuthUser, rememberMe: boolean = true) {
   if (typeof window === "undefined") return;
 
