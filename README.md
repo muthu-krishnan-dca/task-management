@@ -1,248 +1,357 @@
-# 🚀 AbleSpace – Task Management System
+# 🎯 AbleSpace — Enterprise Task Management System
+
+A full-stack, responsive Task Management application built with **Next.js**, **TypeScript**, **Tailwind CSS**, **NestJS**, **MongoDB**, and **Mongoose**. AbleSpace provides task management, authentication, calendar scheduling, notifications, profiles, workspace settings, analytics, admin management, and CSV/Excel export.
 
 ---
 
-## 📌 Project Overview
-**AbleSpace** is an enterprise-grade, full-stack Task Management workspace designed to streamline collaboration, task scheduling, and administrative governance. Built with modern web architecture (**Next.js 16**, **Tailwind CSS**, and **NestJS with MongoDB**), AbleSpace offers high visual polish, lightning-fast interactivity, real-time alert dispatching, and comprehensive role-based access control.
+## 🚀 Features
+
+### 👤 User Features
+
+#### Authentication
+- User registration and login
+- Logout/session handling
+- Protected user/admin areas
+- Role-based access
+
+#### Dashboard
+- Total task count
+- In-progress tasks
+- Completed tasks
+- Overdue task summary
+- My Tasks overview
+
+#### Task Management
+- Create tasks
+- Edit tasks
+- Delete tasks
+- Duplicate tasks
+- Change task status
+- Priority management
+- Project information
+- Due date and time
+- Estimated duration
+- Task description
+
+#### Search & Filtering
+- Search by task information
+- Filter by status
+- Filter by priority
+- Filter overdue tasks
+- Field visibility controls
+
+#### Calendar
+- Monthly calendar view
+- View scheduled task dates
+- Navigate between months
+- Create tasks with due dates
+
+#### Notifications
+- Task update notifications
+- Overdue alerts
+- Deadline alerts
+- Mark notifications as read
+- Clear notifications
+
+#### Profile
+- View profile information
+- Edit profile
+- Upload profile photo
+- View account role
+
+#### Workspace Settings
+- Light/Dark/System theme
+- Account preferences
+- Notification preferences
+- Default task preferences
+
+#### 📤 Task Export
+- Export currently filtered tasks as CSV
+- Export tasks as Excel
+- Export task details such as title, description, status, priority, project, assignee, due date, and duration
 
 ---
 
-## ✨ Features
+### 👑 Admin Features
 
-- **User Authentication**: Secure user registration, validation, credential verification, and persistent session state.
-- **Admin Authentication**: Dedicated administrative portal with guarded routing and elevated super-admin privileges.
-- **Task CRUD**: Create, view, edit, duplicate, assign, and delete tasks with instant status transitions.
-- **Search & Filter**: Real-time multi-parameter filtering across keywords, status (`TODO`, `IN_PROGRESS`, `COMPLETED`, `ON_HOLD`), priority (`HIGH`, `MEDIUM`, `LOW`), and project names.
-- **Calendar**: Interactive monthly/weekly visual scheduling linked with task deadlines and priorities.
-- **Notifications**: Real-time notification hub with Web Audio synthesized chime, browser OS push alerts, and global floating toasts.
-- **Profile**: Personal user management with profile editing, avatar customization, and password updates.
-- **Settings**: 4-Tier governance covering Global Workspace Policies, Notification Preferences, Security & Access Rules, and Data Management.
-- **Analytics**: Live, 100% data-driven metrics including Total System Throughput, Active User Ratio, Overdue Risk Index, Status Breakdown, and Weekly Velocity Trend.
-- **User Management**: Administrative user directory with search, role switching (`User ↔ Admin`), status toggling (`Active ↔ Inactive`), permanent deletion, and self-protection safeguards.
-- **CSV / Excel Export**: Instant client-side export of currently filtered tasks to `.csv` and `.xlsx` spreadsheets.
-- **Responsive UI**: Pixel-perfect responsive design tailored for Desktop, Tablet, and Mobile devices with Dark/Light theme support.
+- Admin authentication
+- Admin dashboard
+- User management
+- Task management
+- Notifications
+- Calendar
+- Advanced analytics
+- Workspace/system settings
+- Global task defaults
+- System announcement banner
+- Add new users
+- Add and manage tasks
+- Admin-only management controls
 
 ---
 
-## 🛠️ Technologies Used
+### 📱 Responsive Design
 
-| Category | Technology |
+The application is designed for:
+- Desktop
+- Tablet
+- Mobile
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
 | :--- | :--- |
-| **Frontend Framework** | Next.js 16 (App Router, Turbopack) & React 19 |
-| **Language** | TypeScript |
-| **Styling & Icons** | Tailwind CSS & Vanilla CSS |
-| **Spreadsheet Engine** | `xlsx` |
-| **Backend Framework** | NestJS v11 (Node.js) |
-| **Database & ODM** | MongoDB & Mongoose |
-| **Validation Layer** | `class-validator` & `class-transformer` |
-| **Audio Engine** | Native Web Audio API (Chime synthesizer) |
-| **Architecture Pattern** | Modular RESTful Architecture |
+| **Frontend Framework** | Next.js 16.3.0 (App Router) |
+| **Frontend Language** | TypeScript |
+| **UI / Styling** | Tailwind CSS & CSS |
+| **Backend Framework** | NestJS v11 |
+| **Backend Language** | TypeScript |
+| **Database** | MongoDB |
+| **ODM** | Mongoose |
+| **Validation** | class-validator & class-transformer |
+| **API** | REST API |
+| **Version Control** | Git & GitHub |
+| **Excel Export** | XLSX |
+| **Development Tools** | VS Code / Antigravity IDE |
 
 ---
 
-## 👥 User Roles
-
-### 1. 👑 Administrator (`Admin`)
-- Full workspace governance.
-- Manage all team tasks, assign responsibility, and edit deadlines.
-- User management: create users, switch roles, activate/deactivate accounts, and delete records.
-- System announcement broadcasts and global workspace policies.
-- Deep-dive into live analytical performance dashboards and security audit logs.
-- *Protected*: Cannot delete, demote, or deactivate their own active admin session account.
-
-### 2. 👤 Standard User (`User` / `Guest`)
-- Access to personal dashboard (`/Dashboard`) and task board (`/tasks`).
-- Create and organize personal/project tasks.
-- Deadline tracking via interactive Calendar (`/calendar`).
-- Receive real-time updates and broadcast alerts (`/notifications`).
-- Update personal profile details and theme preferences (`/profile`, `/settings`).
-- *Restricted*: Strict denial of access to `/admin/*` routes.
-
----
-
-## 📁 Project Architecture
+## 📁 Project Structure
 
 ```
 task-management/
-├── frontend/                     # Next.js App Router Client Application
+├── frontend/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── admin/
-│   │   │   │   ├── dashboard/    # Admin Supercenter (7 Integrated Modules)
-│   │   │   │   └── login/        # Dedicated Admin Login Portal
-│   │   │   ├── calendar/         # Visual Calendar View
-│   │   │   ├── Dashboard/        # User Workspace & KPI Dashboard
-│   │   │   ├── login/            # User Authentication Portal
-│   │   │   ├── notifications/    # Notifications Hub
-│   │   │   ├── profile/          # User Profile Settings
-│   │   │   ├── register/         # User Registration Page
-│   │   │   ├── settings/         # Workspace Settings & Preferences
-│   │   │   ├── tasks/            # Interactive Task Board (Kanban & Table)
-│   │   │   └── layout.tsx        # Root Layout with Theme & Real-time Toaster
-│   │   ├── components/           # Reusable UI Components (Header, Sidebar, Modals, Toaster)
-│   │   ├── types/                # TypeScript Type Definitions (Task, User, Notification)
-│   │   └── utils/                # AuthStore, ExportUtils, NotificationStore, SettingsStore
-│   ├── package.json
-│   └── tailwind.config.ts
-│
-├── backend/                      # NestJS REST API Server
-│   ├── src/
-│   │   ├── auth/                 # Auth Controller, Service, and MongoDB User Schema
-│   │   ├── tasks/                # Tasks Controller, Service, DTOs, and Task Schema
-│   │   ├── app.module.ts         # Root Application Module & MongoDB Connection
-│   │   └── main.ts               # NestJS Bootstrap with Global ValidationPipes & CORS
+│   │   │   │   ├── dashboard/
+│   │   │   │   └── login/
+│   │   │   ├── Dashboard/
+│   │   │   ├── calendar/
+│   │   │   ├── login/
+│   │   │   ├── notifications/
+│   │   │   ├── profile/
+│   │   │   ├── register/
+│   │   │   ├── settings/
+│   │   │   ├── tasks/
+│   │   │   └── user/
+│   │   │       └── dashboard/
+│   │   ├── components/
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── TaskList.tsx
+│   │   │   ├── TaskFormModal.tsx
+│   │   │   ├── CalendarView.tsx
+│   │   │   ├── NotificationsView.tsx
+│   │   │   ├── ProfileView.tsx
+│   │   │   └── ...
+│   │   └── types/
 │   └── package.json
 │
-├── compass-connections/          # Database Connection Profiles & Configuration
-└── README.md                     # Comprehensive Project Documentation
+├── backend/
+│   ├── src/
+│   │   ├── tasks/
+│   │   ├── users/
+│   │   ├── auth/
+│   │   ├── app.module.ts
+│   │   └── main.ts
+│   └── package.json
+│
+├── compass-connections/
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## 🚦 Getting Started
 
 ### Prerequisites
-- **Node.js** (v18.x or higher)
-- **npm** (v9.x or higher)
-- **MongoDB** (Local instance running at `mongodb://localhost:27017` or MongoDB Atlas URI)
+- Node.js 18 or later
+- npm
+- MongoDB / MongoDB Atlas
+- Git
 
 ---
 
-## 🔐 Authentication Flow
+### 1️⃣ Clone the Repository
 
-1. **Registration (`/register`)**:
-   - User inputs Name, Email, Password, and Confirm Password.
-   - Enforces password strength, field validation, and duplicate email prevention.
-   - Defaults new sign-ups to the `User` role.
-
-2. **Login (`/login`, `/admin/login`)**:
-   - Matches credentials via backend `/auth/login` endpoint.
-   - On success, generates session token and redirects based on role:
-     - **Admin** ➔ `/admin/dashboard`
-     - **User** ➔ `/Dashboard`
-
-3. **Session Persistence & Route Guards (`<ProtectedRoute>`)**:
-   - Session state is securely maintained across browser reloads (`F5`).
-   - Unauthenticated visitors attempting to view protected pages are redirected to `/login`.
-   - Regular users attempting to view `/admin/*` are denied access and redirected to `/Dashboard`.
-
-4. **Logout**:
-   - Purges local session tokens and redirects to `/login`.
-   - Prevents browser back-button access to cached protected views.
+```bash
+git clone https://github.com/muthu-krishnan-dca/task-management.git
+cd task-management
+```
 
 ---
 
-## 📋 Task Management
+### 2️⃣ Backend Setup
 
-- **Lifecycle States**: `TODO` ➔ `IN_PROGRESS` ➔ `COMPLETED` (or `ON_HOLD`).
-- **Priority Matrix**: `HIGH` (Red), `MEDIUM` (Amber), `LOW` (Green).
-- **Metadata Fields**: Title, Description, Status, Priority, Project, Assignee, Due Date, Due Time, and Estimated Time.
-- **Dynamic Field Visibility**: Click `⚙️ Fields` in the toolbar to toggle visible table columns.
-- **Task Duplication**: One-click duplication to rapidly clone task templates.
-
----
-
-## 📅 Calendar
-
-- Month-based visual timeline displaying scheduled task cards by due date.
-- Color-coded priority indicators and status badges.
-- Quick navigation across past and future months.
-- Direct click on any date card to view or create a new task.
-
----
-
-## 🔔 Notifications
-
-- **🔊 Audio Engine**: Soft, pleasant 2-tone chime synthesized via browser Web Audio API.
-- **🔔 Desktop Push Alerts**: OS-level native notifications when browser permissions are granted.
-- **✨ Global Live Toasters**: Top-right animated floating notification cards with progress-bar auto-dismiss timers.
-- **Action Triggers**: Instant alerts on task creation, assignment, completion, overdue deadlines, and admin announcements.
-
----
-
-## 📊 Analytics
-
-Real-time calculation engine with visible mathematical formulas:
-- **Total System Throughput**: `(Completed Tasks ÷ Total Tasks) × 100`
-- **Active User Ratio**: `(Active Users ÷ Total Users) × 100`
-- **Overdue Risk Index**: `(Overdue Tasks ÷ Total Tasks) × 100`
-- **Task Status Distribution**: Visual proportional breakdown bar (To Do, In Progress, Completed, On Hold).
-- **Weekly Completion Trend**: Mon → Sun velocity chart.
-
----
-
-## 📤 Export CSV / Excel
-
-- Click the `[ 📤 Export ]` button in the header toolbar to trigger:
-  - 📄 **Export as CSV** (`.csv` format with UTF-8 BOM encoding for Excel compatibility).
-  - 📊 **Export as Excel** (`.xlsx` formatted spreadsheet with optimized column widths).
-- **Filter Respecting**: Exports only the currently filtered subset of tasks (`filteredTasks`).
-- **Empty Guard**: Prevents downloading empty files if no tasks match the filter criteria.
-
----
-
-## 📱 Responsive Design
-
-- **Desktop (>= 1024px)**: Full sidebar navigation, rich KPI grids, expanded search & filter toolbars.
-- **Tablet (768px - 1023px)**: Adaptive grid layouts and collapsable control panels.
-- **Mobile (< 768px)**: Slide-out hamburger navigation drawer, stacked action sub-bar, touch-friendly touch targets, and overflow-protected dropdowns.
-
----
-
-## 🔗 API Endpoints
-
-### 🔐 Authentication (`/auth`)
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/auth/register` | Register a new user |
-| `POST` | `/auth/login` | Authenticate user credentials & return session |
-| `GET` | `/auth/users` | Retrieve all registered users |
-| `PATCH` | `/auth/users/:id` | Update user details, role, or status |
-| `DELETE` | `/auth/users/:id` | Permanently delete user from database |
-
-### 📋 Tasks (`/tasks`)
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/tasks` | List all tasks with search & filter params |
-| `POST` | `/tasks` | Create a new task (DTO validated) |
-| `GET` | `/tasks/:id` | Fetch task details by ID |
-| `PUT` | `/tasks/:id` | Update task details, status, or assignee |
-| `DELETE` | `/tasks/:id` | Delete task from database |
-
----
-
-## ▶️ How to Run
-
-### Default Credentials
-| Role | Email | Password | Landing Page |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@ablespace.io` | `admin` | `/admin/dashboard` |
-| **User** | `user@ablespace.io` | `user` | `/Dashboard` |
-| **Guest** | Instant 1-Click Guest Login | — | `/Dashboard` |
-
-### 1. Start Backend API
 ```bash
 cd backend
 npm install
 npm run start:dev
 ```
-> Server runs on: **`http://localhost:3001`**
 
-### 2. Start Frontend Application
+> Make sure the backend environment variables are configured for the MongoDB connection and authentication settings.
+
+---
+
+### 3️⃣ Frontend Setup
+
+Open a new terminal:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-> Web Application runs on: **`http://localhost:3000`**
+
+Then open the local frontend URL shown by Next.js (`http://localhost:3000`).
 
 ---
 
-## 🚀 Deployment
+## 🧪 Production Build
 
-- **Frontend**: Deployable to **Vercel** / **Netlify** (Set `NEXT_PUBLIC_BACKEND_URL` environment variable).
-- **Backend**: Deployable to **Render** / **Railway** / **AWS ECS** (Configure `MONGODB_URI` and `PORT`).
-- **Database**: **MongoDB Atlas** cloud cluster with automated backups and connection pooling.
+Before deployment, run:
+
+```bash
+cd frontend
+npm run build
+```
+
+The production build should complete successfully before deployment.
+
+---
+
+## 📡 REST API
+
+The backend exposes REST APIs for authentication, users, and task management.
+
+### Task API
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/tasks` | Retrieve tasks |
+| `GET` | `/tasks/:id` | Retrieve one task |
+| `POST` | `/tasks` | Create a task |
+| `PATCH` | `/tasks/:id` | Update a task |
+| `DELETE` | `/tasks/:id` | Delete a task |
+
+#### Typical Task Operations
+
+```json
+{
+  "title": "Build Documentation",
+  "description": "Create project documentation",
+  "status": "IN_PROGRESS",
+  "priority": "HIGH",
+  "dueDate": "2026-08-15"
+}
+```
+
+---
+
+## 🔐 Authentication & Authorization
+
+The application separates normal user and administrator functionality.
+
+### 👤 User
+Users can:
+- Manage their tasks
+- View dashboard information
+- Use the calendar
+- View notifications
+- Manage their profile
+- Configure personal settings
+- Export tasks
+
+### 👑 Admin
+Administrators can additionally:
+- Manage users
+- Manage system tasks
+- View analytics
+- Configure global workspace settings
+- Manage system announcements
+
+---
+
+## 📊 Analytics
+
+The admin analytics area provides a high-level view of:
+- Total system throughput
+- Active user ratio
+- Overdue risk
+- User workload distribution
+- Task completion progress
+
+---
+
+## 📤 Export Tasks
+
+Users can export task information from the task management interface.
+
+- **CSV**: `ablespace-tasks-YYYY-MM-DD.csv`
+- **Excel**: `ablespace-tasks-YYYY-MM-DD.xlsx`
+
+The export uses the tasks currently available after the active search/filter conditions.
+
+---
+
+## 📱 Responsive Testing
+
+The application should be tested at:
+- **Mobile**: approximately 360–430px
+- **Tablet**: approximately 768px
+- **Desktop**: 1280px and above
+
+### Important screens:
+- Dashboard
+- Tasks
+- Calendar
+- Notifications
+- Profile
+- Settings
+- Admin Dashboard
+- Admin Users
+- Admin Analytics
+
+---
+
+## 🧹 Final Quality Checklist
+
+- [x] Authentication
+- [x] User Dashboard
+- [x] Admin Dashboard
+- [x] Task CRUD
+- [x] Task Edit
+- [x] Task Delete
+- [x] Task Duplicate
+- [x] Search
+- [x] Filters
+- [x] Calendar
+- [x] Notifications
+- [x] Profile
+- [x] Settings
+- [x] Analytics
+- [x] CSV Export
+- [x] Excel Export
+- [x] Responsive UI
+- [x] TypeScript production build
+- [x] GitHub push
+
+---
+
+## 🌿 Git Workflow
+
+```bash
+git status
+git add .
+git commit -m "Update AbleSpace documentation"
+git push
+```
+
+**Repository**:
+[https://github.com/muthu-krishnan-dca/task-management](https://github.com/muthu-krishnan-dca/task-management)
 
 ---
 
