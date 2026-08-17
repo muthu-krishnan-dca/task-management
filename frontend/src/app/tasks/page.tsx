@@ -6,6 +6,7 @@ import Header, { TaskFilters } from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import TaskBoard from "@/components/taskboard";
 import { TaskFormModal } from "@/components/TaskFormModal";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   createNotification,
   syncSystemTaskNotifications,
@@ -363,93 +364,93 @@ export default function MyTasksPage() {
     }
   };
 
-const handleStatusChange = async (
-  taskId: string,
-  newStatus: TaskStatus
-) => {
-  const currentTask = tasks.find((t) => t.id === taskId);
-  if (currentTask && currentTask.status !== newStatus) {
-    if (newStatus === "COMPLETED") {
-      createNotification({
-        title: `✅ Task Completed: "${currentTask.title}"`,
-        message: `Task has been marked as completed!`,
-        type: "TASK_COMPLETED",
-        taskId: currentTask.id,
-      });
-    } else {
-      createNotification({
-        title: `🔄 Status Changed: "${currentTask.title}"`,
-        message: `Task status changed from ${currentTask.status} to ${newStatus}.`,
-        type: "STATUS_CHANGED",
-        taskId: currentTask.id,
-      });
-    }
-  }
-
-  try {
-    // Optimistic UI update
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId
-          ? { ...task, status: newStatus }
-          : task
-      )
-    );
-
-    const response = await fetch(
-      `${BACKEND_URL}/tasks/${taskId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus,
-        }),
+  const handleStatusChange = async (
+    taskId: string,
+    newStatus: TaskStatus
+  ) => {
+    const currentTask = tasks.find((t) => t.id === taskId);
+    if (currentTask && currentTask.status !== newStatus) {
+      if (newStatus === "COMPLETED") {
+        createNotification({
+          title: `✅ Task Completed: "${currentTask.title}"`,
+          message: `Task has been marked as completed!`,
+          type: "TASK_COMPLETED",
+          taskId: currentTask.id,
+        });
+      } else {
+        createNotification({
+          title: `🔄 Status Changed: "${currentTask.title}"`,
+          message: `Task status changed from ${currentTask.status} to ${newStatus}.`,
+          type: "STATUS_CHANGED",
+          taskId: currentTask.id,
+        });
       }
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to update task status");
     }
 
-    const updatedTask = await response.json();
-
-    const formattedTask = formatTask(updatedTask);
-
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId
-          ? formattedTask
-          : task
-      )
-    );
-
-  } catch (error) {
-    console.error(
-      "Failed to update task status:",
-      error
-    );
-
-    // Reload tasks if update fails
     try {
+      // Optimistic UI update
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId
+            ? { ...task, status: newStatus }
+            : task
+        )
+      );
+
       const response = await fetch(
-        `${BACKEND_URL}/tasks`
+        `${BACKEND_URL}/tasks/${taskId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        }
       );
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("Failed to update task status");
+      }
 
-      setTasks(data.map(formatTask));
-    } catch (reloadError) {
+      const updatedTask = await response.json();
+
+      const formattedTask = formatTask(updatedTask);
+
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === taskId
+            ? formattedTask
+            : task
+        )
+      );
+
+    } catch (error) {
       console.error(
-        "Failed to reload tasks:",
-        reloadError
+        "Failed to update task status:",
+        error
       );
-    }
 
-    alert("Failed to update task status");
-  }
-};
+      // Reload tasks if update fails
+      try {
+        const response = await fetch(
+          `${BACKEND_URL}/tasks`
+        );
+
+        const data = await response.json();
+
+        setTasks(data.map(formatTask));
+      } catch (reloadError) {
+        console.error(
+          "Failed to reload tasks:",
+          reloadError
+        );
+      }
+
+      alert("Failed to update task status");
+    }
+  };
 
   const filteredTasks = tasks.filter((task) => {
     // Search query filter
@@ -501,81 +502,83 @@ const handleStatusChange = async (
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <ProtectedRoute>
+      <main className="min-h-screen bg-gray-50 text-gray-900">
 
-      {/* Add / Edit Modal */}
-      {showForm && (
-        <TaskFormModal
-          initialTask={editingTask}
-          onClose={handleCloseForm}
-          onSubmit={handleSaveTask}
-        />
-      )}
+        {/* Add / Edit Modal */}
+        {showForm && (
+          <TaskFormModal
+            initialTask={editingTask}
+            onClose={handleCloseForm}
+            onSubmit={handleSaveTask}
+          />
+        )}
 
-      {/* Sidebar */}
-      <Sidebar />
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Content */}
-      <section className="md:ml-64 min-h-screen">
+        {/* Main Content */}
+        <section className="md:ml-64 min-h-screen">
 
-        {/* Header */}
-        <Header
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddTask={handleAddTask}
-          visibleFields={visibleFields}
-          onVisibleFieldsChange={setVisibleFields}
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
+          {/* Header */}
+          <Header
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddTask={handleAddTask}
+            visibleFields={visibleFields}
+            onVisibleFieldsChange={setVisibleFields}
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
 
-        {/* Body Content */}
-        <div className="p-4 sm:p-6">
+          {/* Body Content */}
+          <div className="p-4 sm:p-6">
 
-          {/* Page Header */}
-          <div className="mb-6 flex items-center justify-between">
+            {/* Page Header */}
+            <div className="mb-6 flex items-center justify-between">
 
-            <div>
-              <h1 className="text-2xl font-semibold">
-                Tasks
-              </h1>
+              <div>
+                <h1 className="text-2xl font-semibold">
+                  Tasks
+                </h1>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Manage and track your tasks
-              </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Manage and track your tasks
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddTask}
+                className="rounded-lg bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                + Add Task
+              </button>
+
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddTask}
-              className="rounded-lg bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
-            >
-              + Add Task
-            </button>
+            {/* Task Board */}
+            {isLoading ? (
+              <div className="py-10 text-center text-gray-500">
+                Loading tasks...
+              </div>
+            ) : (
+              <TaskBoard
+                tasks={filteredTasks}
+                visibleFields={visibleFields}
+                searchQuery={searchQuery}
+                onClearSearch={() => setSearchQuery("")}
+                onAddTask={handleAddTask}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                onStatusChange={handleStatusChange}
+                onDuplicateTask={handleDuplicateTask}
+              />
+            )}
 
           </div>
-
-          {/* Task Board */}
-          {isLoading ? (
-            <div className="py-10 text-center text-gray-500">
-              Loading tasks...
-            </div>
-          ) : (
-            <TaskBoard
-              tasks={filteredTasks}
-              visibleFields={visibleFields}
-              searchQuery={searchQuery}
-              onClearSearch={() => setSearchQuery("")}
-              onAddTask={handleAddTask}
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              onStatusChange={handleStatusChange}
-              onDuplicateTask={handleDuplicateTask}
-            />
-          )}
-
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </ProtectedRoute>
   );
 }

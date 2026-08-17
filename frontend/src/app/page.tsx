@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import TaskBoard from "@/components/taskboard";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { TaskStatus } from "@/types/task";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   createNotification,
   syncSystemTaskNotifications,
@@ -505,82 +506,84 @@ const handleStatusChange = async (
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
 
-      {/* Add / Edit Task Modal */}
-      {showForm && (
-        <TaskFormModal
-          initialTask={editingTask}
-          onClose={handleCloseForm}
-          onSubmit={handleSaveTask}
-        />
-      )}
+        {/* Add / Edit Task Modal */}
+        {showForm && (
+          <TaskFormModal
+            initialTask={editingTask}
+            onClose={handleCloseForm}
+            onSubmit={handleSaveTask}
+          />
+        )}
 
-      {/* Sidebar */}
-      <Sidebar />
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Area */}
-      <div className="md:ml-64 min-h-screen">
+        {/* Main Area */}
+        <div className="md:ml-64 min-h-screen">
 
-        {/* Header */}
-        <Header
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddTask={handleAddTask}
-          visibleFields={visibleFields}
-          onVisibleFieldsChange={setVisibleFields}
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
+          {/* Header */}
+          <Header
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddTask={handleAddTask}
+            visibleFields={visibleFields}
+            onVisibleFieldsChange={setVisibleFields}
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
 
-        {/* Content */}
-        <main className="p-4 sm:p-6">
+          {/* Content */}
+          <main className="p-4 sm:p-6">
 
-          {/* Page Header */}
-          <div className="mb-6 flex items-center justify-between">
+            {/* Page Header */}
+            <div className="mb-6 flex items-center justify-between">
 
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                Tasks
-              </h1>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  Tasks
+                </h1>
 
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Manage and track your tasks
-              </p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Manage and track your tasks
+                </p>
+              </div>
+
+              {/* Add Task */}
+              <button
+                type="button"
+                onClick={handleAddTask}
+                className="rounded-lg bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                + Add Task
+              </button>
+
             </div>
 
-            {/* Add Task */}
-            <button
-              type="button"
-              onClick={handleAddTask}
-              className="rounded-lg bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
-            >
-              + Add Task
-            </button>
+            {/* Task Board */}
+            {loading ? (
+              <div className="py-10 text-center text-gray-500">
+                Loading tasks...
+              </div>
+            ) : (
+              <TaskBoard
+                tasks={filteredTasks}
+                visibleFields={visibleFields}
+                searchQuery={searchQuery}
+                onClearSearch={() => setSearchQuery("")}
+                onAddTask={handleAddTask}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                onStatusChange={handleStatusChange}
+                onDuplicateTask={handleDuplicateTask}
+              />
+            )}
 
-          </div>
-
-          {/* Task Board */}
-          {loading ? (
-            <div className="py-10 text-center text-gray-500">
-              Loading tasks...
-            </div>
-          ) : (
-            <TaskBoard
-  tasks={filteredTasks}
-  visibleFields={visibleFields}
-  searchQuery={searchQuery}
-  onClearSearch={() => setSearchQuery("")}
-  onAddTask={handleAddTask}
-  onEditTask={handleEditTask}
-  onDeleteTask={handleDeleteTask}
-  onStatusChange={handleStatusChange}
-  onDuplicateTask={handleDuplicateTask}
-/>
-          )}
-
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

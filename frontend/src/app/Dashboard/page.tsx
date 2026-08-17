@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { VisibleFields, defaultVisibleFields } from "@/types/task";
 import { TaskFilters } from "@/components/Header";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   createNotification,
   syncSystemTaskNotifications,
@@ -322,384 +323,374 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Modal */}
-      {showForm && (
-        <TaskFormModal
-          initialTask={editingTask}
-          onClose={handleCloseForm}
-          onSubmit={handleSaveTask}
-        />
-      )}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        {/* Modal */}
+        {showForm && (
+          <TaskFormModal
+            initialTask={editingTask}
+            onClose={handleCloseForm}
+            onSubmit={handleSaveTask}
+          />
+        )}
 
-      {/* Sidebar */}
-      <Sidebar />
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Content Area */}
-      <div className="md:ml-64 min-h-screen">
-        {/* Header */}
-        <Header
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddTask={handleAddTask}
-          visibleFields={visibleFields}
-          onVisibleFieldsChange={setVisibleFields}
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
+        {/* Main Content Area */}
+        <div className="md:ml-64 min-h-screen">
+          {/* Header */}
+          <Header
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddTask={handleAddTask}
+            visibleFields={visibleFields}
+            onVisibleFieldsChange={setVisibleFields}
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
 
-        {/* Dashboard Body */}
-        <main className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
-          {/* Welcome / Dashboard Title */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 suppressHydrationWarning className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                Welcome back, {profile.name}!
-              </h1>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Here is the real-time summary of your workspace tasks and deadlines.
-              </p>
+          {/* Dashboard Body */}
+          <main className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
+            {/* Welcome / Dashboard Title */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 suppressHydrationWarning className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  Welcome back, {profile.name}!
+                </h1>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Here is the real-time summary of your workspace tasks and deadlines.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={handleAddTask}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-black dark:bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-gray-800 dark:hover:bg-indigo-500 transition-colors cursor-pointer"
+                >
+                  <span>+</span>
+                  <span>Add Task</span>
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddTask}
-              className="inline-flex items-center justify-center rounded-lg bg-black dark:bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-gray-800 dark:hover:bg-indigo-500 shadow-xs"
-            >
-              + Add Task
-            </button>
-          </div>
-
-          {/* ------------------------------------------------------------- */}
-          {/* 4 SUMMARY CARDS: Total Tasks | In Progress | Completed | Overdue */}
-          {/* ------------------------------------------------------------- */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Tasks */}
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-xs">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+            {/* Quick Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Tasks Card */}
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 p-5 shadow-xs transition hover:shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     Total Tasks
-                  </p>
-                  <h2 className="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white">
+                  </span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-sm">
+                    📋
+                  </span>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">
                     {totalTasksCount}
-                  </h2>
-                  <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-                    All tasks in workspace
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700 text-lg">
-                  📋
+                  </span>
+                  <span className="text-xs font-medium text-gray-400">active</span>
                 </div>
               </div>
-            </div>
 
-            {/* In Progress */}
-            <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-gray-800 p-5 shadow-xs">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+              {/* In Progress Card */}
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 p-5 shadow-xs transition hover:shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     In Progress
-                  </p>
-                  <h2 className="mt-2 text-3xl font-extrabold text-blue-600 dark:text-blue-400">
+                  </span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 text-sm">
+                    ⚡
+                  </span>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
                     {inProgressCount}
-                  </h2>
-                  <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-                    Currently working
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/70 text-lg">
-                  ⏳
+                  </span>
+                  <span className="text-xs font-medium text-gray-400">doing</span>
                 </div>
               </div>
-            </div>
 
-            {/* Completed */}
-            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-gray-800 p-5 shadow-xs">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              {/* Completed Card */}
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 p-5 shadow-xs transition hover:shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     Completed
-                  </p>
-                  <h2 className="mt-2 text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                  </span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-sm">
+                    ✅
+                  </span>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
                     {completedCount}
-                  </h2>
-                  <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-                    Finished tasks
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-lg text-emerald-600 dark:text-emerald-400 font-bold">
-                  ✓
+                  </span>
+                  <span className="text-xs font-medium text-gray-400">done</span>
                 </div>
               </div>
-            </div>
 
-            {/* Overdue */}
-            <div className="rounded-2xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-gray-800 p-5 shadow-xs">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+              {/* Overdue Card */}
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 p-5 shadow-xs transition hover:shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     Overdue
-                  </p>
-                  <h2 className="mt-2 text-3xl font-extrabold text-red-600 dark:text-red-400">
-                    {overdueCount}
-                  </h2>
-                  <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-                    Needs urgent attention
-                  </p>
+                  </span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-sm">
+                    🚨
+                  </span>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/70 text-lg text-red-600 dark:text-red-400">
-                  ⚠️
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+                    {overdueCount}
+                  </span>
+                  <span className="text-xs font-medium text-gray-400">needs action</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* ------------------------------------------------------------- */}
-          {/* MY TASKS SECTION WITH STATUS FILTERS & RECENT TASK LIST */}
-          {/* ------------------------------------------------------------- */}
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs overflow-hidden">
-            {/* Section Header & Status Filters */}
-            <div className="border-b border-gray-100 dark:border-gray-700 p-4 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* MY TASKS SECTION WITH STATUS FILTERS & RECENT TASK LIST */}
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 shadow-xs overflow-hidden">
+              {/* Section Header & Status Filters */}
+              <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 dark:text-white">My Tasks</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                    Workspace Task Activity
+                  </h2>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     Showing {filteredTasks.length} {filteredTasks.length === 1 ? "task" : "tasks"}
                   </p>
                 </div>
 
                 {/* Status Filter Tabs */}
-                <div className="flex items-center gap-1.5 rounded-xl bg-gray-100 dark:bg-gray-900 p-1 text-xs overflow-x-auto max-w-full">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("ALL")}
-                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition ${
-                      activeTab === "ALL"
-                        ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    All ({totalTasksCount})
-                  </button>
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+                  <div className="flex items-center rounded-xl bg-gray-100 dark:bg-gray-700/60 p-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("ALL")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeTab === "ALL"
+                          ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs font-bold"
+                          : "hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      All ({tasks.length})
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("TODO")}
-                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition ${
-                      activeTab === "TODO"
-                        ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    To Do
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("TODO")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeTab === "TODO"
+                          ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs font-bold"
+                          : "hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      To Do
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("IN_PROGRESS")}
-                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition ${
-                      activeTab === "IN_PROGRESS"
-                        ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    In Progress ({inProgressCount})
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("IN_PROGRESS")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeTab === "IN_PROGRESS"
+                          ? "bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-xs font-bold"
+                          : "hover:text-amber-600 dark:hover:text-amber-400"
+                      }`}
+                    >
+                      In Progress ({inProgressCount})
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("COMPLETED")}
-                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition ${
-                      activeTab === "COMPLETED"
-                        ? "bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    Completed ({completedCount})
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("COMPLETED")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeTab === "COMPLETED"
+                          ? "bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold"
+                          : "hover:text-emerald-600 dark:hover:text-emerald-400"
+                      }`}
+                    >
+                      Completed ({completedCount})
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("ON_HOLD")}
-                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition ${
-                      activeTab === "ON_HOLD"
-                        ? "bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                  >
-                    On Hold
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("OVERDUE")}
-                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition ${
-                      activeTab === "OVERDUE"
-                        ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-xs"
-                        : "text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                    }`}
-                  >
-                    Overdue ({overdueCount})
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("OVERDUE")}
+                      className={`rounded-lg px-3 py-1.5 transition ${
+                        activeTab === "OVERDUE"
+                          ? "bg-white dark:bg-gray-800 text-rose-600 dark:text-rose-400 shadow-xs font-bold"
+                          : "text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                      }`}
+                    >
+                      Overdue ({overdueCount})
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Task List Content */}
-            <div className="p-4">
-              {isLoading ? (
-                <div className="py-12 text-center text-xs text-gray-400">
-                  Loading tasks...
-                </div>
-              ) : filteredTasks.length === 0 ? (
-                <div className="py-12 text-center">
-                  <div className="text-3xl">📋</div>
-                  <p className="mt-2 text-xs font-semibold text-gray-700">No tasks found</p>
-                  <p className="mt-1 text-xs text-gray-400">
-                    Try changing your search keywords or status filter.
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100">
-                  {filteredTasks.map((task) => {
-                    const overdue = isTaskOverdue(task);
+              {/* Task List Content */}
+              <div className="p-4">
+                {isLoading ? (
+                  <div className="py-12 text-center text-xs text-gray-400">
+                    Loading tasks...
+                  </div>
+                ) : filteredTasks.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="text-3xl">📋</div>
+                    <p className="mt-2 text-xs font-semibold text-gray-700">No tasks found</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Try changing your search keywords or status filter.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {filteredTasks.map((task) => {
+                      const overdue = isTaskOverdue(task);
 
-                    return (
-                      <div
-                        key={task.id}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-2 hover:bg-gray-50/80 rounded-lg transition"
-                      >
-                        {/* Left Info */}
-                        <div className="flex items-start gap-3 min-w-0">
-                          {/* Quick Status Toggle Checkbox */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleStatusChange(
-                                task.id,
-                                task.status === "COMPLETED" ? "TODO" : "COMPLETED"
-                              )
-                            }
-                            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition ${
-                              task.status === "COMPLETED"
-                                ? "border-green-600 bg-green-600 text-white"
-                                : "border-gray-300 hover:border-gray-400"
-                            }`}
-                            title={
-                              task.status === "COMPLETED"
-                                ? "Mark as Incomplete"
-                                : "Mark as Completed"
-                            }
-                          >
-                            {task.status === "COMPLETED" && (
-                              <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            )}
-                          </button>
+                      return (
+                        <div
+                          key={task.id}
+                          className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-2 hover:bg-gray-50/80 rounded-lg transition"
+                        >
+                          {/* Left Info */}
+                          <div className="flex items-start gap-3 min-w-0">
+                            {/* Quick Status Toggle Checkbox */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleStatusChange(
+                                  task.id,
+                                  task.status === "COMPLETED" ? "TODO" : "COMPLETED"
+                                )
+                              }
+                              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition ${
+                                task.status === "COMPLETED"
+                                  ? "border-green-600 bg-green-600 text-white"
+                                  : "border-gray-300 hover:border-gray-400"
+                              }`}
+                              title={
+                                task.status === "COMPLETED"
+                                  ? "Mark as Incomplete"
+                                  : "Mark as Completed"
+                              }
+                            >
+                              {task.status === "COMPLETED" && (
+                                <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              )}
+                            </button>
 
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3
-                                className={`text-xs font-semibold truncate ${
-                                  task.status === "COMPLETED"
-                                    ? "text-gray-400 line-through"
-                                    : "text-gray-900"
-                                }`}
-                              >
-                                {task.title}
-                              </h3>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3
+                                  className={`text-xs font-semibold truncate ${
+                                    task.status === "COMPLETED"
+                                      ? "text-gray-400 line-through"
+                                      : "text-gray-900"
+                                  }`}
+                                >
+                                  {task.title}
+                                </h3>
 
-                              {/* Project Tag */}
-                              {task.project && (
-                                <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
-                                  {task.project}
-                                </span>
+                                {/* Project Tag */}
+                                {visibleFields.project && task.project && (
+                                  <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+                                    {task.project}
+                                  </span>
+                                )}
+                              </div>
+
+                              {visibleFields.description && task.description && (
+                                <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
+                                  {task.description}
+                                </p>
                               )}
                             </div>
+                          </div>
 
-                            {task.description && (
-                              <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
-                                {task.description}
-                              </p>
+                          {/* Right Info & Actions */}
+                          <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                            {/* Priority Badge */}
+                            {visibleFields.priority && (
+                              <span
+                                className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                                  task.priority === "HIGH"
+                                    ? "bg-red-50 text-red-700 border border-red-100"
+                                    : task.priority === "MEDIUM"
+                                    ? "bg-amber-50 text-amber-700 border border-amber-100"
+                                    : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                }`}
+                              >
+                                {task.priority}
+                              </span>
                             )}
+
+                            {/* Due Date */}
+                            {visibleFields.dueDate && (
+                              <span
+                                className={`text-xs ${
+                                  overdue
+                                    ? "font-semibold text-red-600"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {overdue ? `Overdue: ${task.dueDate}` : task.dueDate}
+                              </span>
+                            )}
+
+                            {/* Status Select */}
+                            {visibleFields.status && (
+                              <select
+                                value={task.status}
+                                onChange={(e) =>
+                                  handleStatusChange(task.id, e.target.value as TaskStatus)
+                                }
+                                className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 outline-none focus:border-indigo-500"
+                              >
+                                <option value="TODO">To Do</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="ON_HOLD">On Hold</option>
+                              </select>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
+                              <button
+                                type="button"
+                                onClick={() => handleEditTask(task)}
+                                className="p-1 text-xs text-gray-400 hover:text-gray-700"
+                                title="Edit Task"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTask(task.id)}
+                                className="p-1 text-xs text-gray-400 hover:text-red-600"
+                                title="Delete Task"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
                         </div>
-
-                        {/* Right Info & Actions */}
-                        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                          {/* Priority Badge */}
-                          <span
-                            className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                              task.priority === "HIGH"
-                                ? "bg-red-50 text-red-700 border border-red-100"
-                                : task.priority === "MEDIUM"
-                                ? "bg-amber-50 text-amber-700 border border-amber-100"
-                                : "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                            }`}
-                          >
-                            {task.priority}
-                          </span>
-
-                          {/* Due Date */}
-                          <span
-                            className={`text-xs ${
-                              overdue
-                                ? "font-semibold text-red-600"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {overdue ? `Overdue: ${task.dueDate}` : task.dueDate}
-                          </span>
-
-                          {/* Status Select */}
-                          <select
-                            value={task.status}
-                            onChange={(e) =>
-                              handleStatusChange(task.id, e.target.value as TaskStatus)
-                            }
-                            className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 outline-none focus:border-indigo-500"
-                          >
-                            <option value="TODO">To Do</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="ON_HOLD">On Hold</option>
-                          </select>
-
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100">
-                            <button
-                              type="button"
-                              onClick={() => handleEditTask(task)}
-                              className="p-1 text-xs text-gray-400 hover:text-gray-700"
-                              title="Edit Task"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="p-1 text-xs text-gray-400 hover:text-red-600"
-                              title="Delete Task"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

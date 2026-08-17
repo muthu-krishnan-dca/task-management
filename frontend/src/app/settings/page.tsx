@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import { SettingsView } from "@/components/SettingsView";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { TaskPriority, TaskStatus } from "@/types/task";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { createNotification } from "@/utils/notificationStore";
 import { getUserProfile, saveUserProfile } from "@/utils/userStore";
 
@@ -59,32 +60,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Modal */}
-      {showForm && (
-        <TaskFormModal
-          onClose={() => setShowForm(false)}
-          onSubmit={handleSaveTask}
-        />
-      )}
-
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div className="md:ml-64 min-h-screen">
-        {/* Header */}
-        <Header hideTaskControls={true} hideMobileToolbar={true} />
-
-        {/* Settings Content */}
-        <main className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
-          <SettingsView
-            darkMode={darkMode}
-            currentUser={profile}
-            onUpdateUser={handleUpdateUser}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        {/* Modal */}
+        {showForm && (
+          <TaskFormModal
+            onClose={() => setShowForm(false)}
+            onSubmit={handleSaveTask}
           />
-        </main>
+        )}
+
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content Area */}
+        <div className="md:ml-64 min-h-screen">
+          {/* Header */}
+          <Header onAddTask={() => setShowForm(true)} />
+
+          {/* Settings Content */}
+          <main className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
+            <SettingsView
+              darkMode={darkMode}
+              currentUser={profile}
+              onUpdateUser={handleUpdateUser}
+            />
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

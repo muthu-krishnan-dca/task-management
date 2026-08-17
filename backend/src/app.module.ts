@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TasksModule } from './tasks/tasks.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       useFactory: (configService: ConfigService) => {
         const uri =
           configService.get<string>('MONGODB_URI') ||
-          'mongodb://127.0.0.1:27017/task_management';
+          'mongodb://127.0.0.1:27017/task-management';
         return {
           uri,
         };
@@ -23,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     }),
     TasksModule,
     NotificationsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

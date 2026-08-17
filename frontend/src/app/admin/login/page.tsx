@@ -3,36 +3,32 @@
 import { AdminLoginPage } from "@/components/AdminLoginPage";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { AuthUser, getAuthUser, isAuthenticated, setSession } from "@/utils/authStore";
 
 export default function AdminLoginPageWrapper() {
   const router = useRouter();
 
   // Session check: if already logged in as Admin, redirect to /admin/dashboard
   useEffect(() => {
-    const savedSession = localStorage.getItem("isLoggedIn");
-    const savedUser = localStorage.getItem("user");
-    if (savedSession === "true" && savedUser) {
-      try {
-        const userObj = JSON.parse(savedUser);
-        if (userObj.role === "Admin") {
-          router.push("/admin/dashboard");
-        }
-      } catch {
-        // Fallback
+    if (isAuthenticated()) {
+      const user = getAuthUser();
+      if (user?.role === "Admin") {
+        router.replace("/admin/dashboard");
+      } else {
+        router.replace("/Dashboard");
       }
     }
   }, [router]);
 
-  const handleAdminSuccess = (admin: { name: string; role: "Admin"; email: string }) => {
-    localStorage.setItem("user", JSON.stringify(admin));
-    localStorage.setItem("isLoggedIn", "true");
+  const handleAdminSuccess = (admin: AuthUser) => {
+    setSession(admin, true);
     router.push("/admin/dashboard");
   };
 
   return (
     <AdminLoginPage
       onAdminLoginSuccess={handleAdminSuccess}
-      onGoToUserLogin={() => router.push("/")}
+      onGoToUserLogin={() => router.push("/login")}
     />
   );
 }

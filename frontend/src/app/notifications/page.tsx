@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import { NotificationsView } from "@/components/NotificationsView";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { TaskPriority, TaskStatus } from "@/types/task";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { createNotification } from "@/utils/notificationStore";
 
 interface TaskFormData {
@@ -51,28 +52,30 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Modal */}
-      {showForm && (
-        <TaskFormModal
-          onClose={() => setShowForm(false)}
-          onSubmit={handleSaveTask}
-        />
-      )}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        {/* Modal */}
+        {showForm && (
+          <TaskFormModal
+            onClose={() => setShowForm(false)}
+            onSubmit={handleSaveTask}
+          />
+        )}
 
-      {/* Sidebar */}
-      <Sidebar />
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Content Area */}
-      <div className="md:ml-64 min-h-screen">
-        {/* Header */}
-        <Header hideTaskControls={true} hideMobileToolbar={true} />
+        {/* Main Content Area */}
+        <div className="md:ml-64 min-h-screen">
+          {/* Header */}
+          <Header onAddTask={() => setShowForm(true)} />
 
-        {/* Notifications View Content */}
-        <main className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
-          <NotificationsView />
-        </main>
+          {/* Notifications View Content */}
+          <main className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
+            <NotificationsView />
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

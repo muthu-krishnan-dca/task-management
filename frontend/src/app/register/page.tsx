@@ -6,11 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AuthUser, isAuthenticated } from "@/utils/authStore";
 import { useEffect } from "react";
 
-function LoginContent() {
+function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
-  const modeParam = searchParams.get("mode") === "register" ? "register" : "login";
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -19,34 +18,30 @@ function LoginContent() {
     }
   }, [router, redirectParam]);
 
-  const handleLoginSuccess = (user: AuthUser) => {
-    if (user.role === "Admin" && (!redirectParam || redirectParam === "/")) {
-      router.push("/Dashboard");
-      return;
-    }
+  const handleRegisterSuccess = (user: AuthUser) => {
     const target = redirectParam ? decodeURIComponent(redirectParam) : "/Dashboard";
     router.push(target);
   };
 
   return (
     <UserLoginPage
-      initialMode={modeParam}
-      onUserLoginSuccess={handleLoginSuccess}
+      initialMode="register"
+      onUserLoginSuccess={handleRegisterSuccess}
       onGoToAdminLogin={() => router.push("/admin/login")}
     />
   );
 }
 
-export default function LoginPageWrapper() {
+export default function RegisterPageWrapper() {
   return (
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-gray-50 text-xs text-gray-500">
-          Loading login...
+          Loading register...
         </div>
       }
     >
-      <LoginContent />
+      <RegisterContent />
     </Suspense>
   );
 }

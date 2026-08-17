@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import { CalendarView } from "@/components/CalendarView";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { Task, TaskPriority, TaskStatus, VisibleFields, defaultVisibleFields } from "@/types/task";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { createNotification, syncSystemTaskNotifications } from "@/utils/notificationStore";
 
 interface TaskFormData {
@@ -154,73 +155,75 @@ export default function CalendarPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-      {/* Modal */}
-      {showForm && (
-        <TaskFormModal
-          initialTask={editingTask}
-          onClose={() => {
-            setShowForm(false);
-            setEditingTask(null);
-          }}
-          onSubmit={handleSaveTask}
-        />
-      )}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+        {/* Modal */}
+        {showForm && (
+          <TaskFormModal
+            initialTask={editingTask}
+            onClose={() => {
+              setShowForm(false);
+              setEditingTask(null);
+            }}
+            onSubmit={handleSaveTask}
+          />
+        )}
 
-      {/* Sidebar */}
-      <Sidebar />
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Content Area */}
-      <div className="md:ml-64 min-h-screen">
-        {/* Header */}
-        <Header
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddTask={() => {
-            setEditingTask(null);
-            setShowForm(true);
-          }}
-          visibleFields={visibleFields}
-          onVisibleFieldsChange={setVisibleFields}
-        />
+        {/* Main Content Area */}
+        <div className="md:ml-64 min-h-screen">
+          {/* Header */}
+          <Header
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddTask={() => {
+              setEditingTask(null);
+              setShowForm(true);
+            }}
+            visibleFields={visibleFields}
+            onVisibleFieldsChange={setVisibleFields}
+          />
 
-        {/* Calendar View Content */}
-        <main className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                📅 Workspace Calendar
-              </h1>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                View deadlines, manage daily schedules, and add scheduled tasks by date.
-              </p>
+          {/* Calendar View Content */}
+          <main className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  📅 Workspace Calendar
+                </h1>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  View deadlines, manage daily schedules, and add scheduled tasks by date.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTask(null);
+                  setShowForm(true);
+                }}
+                className="inline-flex items-center justify-center rounded-lg bg-black dark:bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-gray-800 dark:hover:bg-indigo-500 shadow-xs cursor-pointer"
+              >
+                + Add Task
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setEditingTask(null);
-                setShowForm(true);
-              }}
-              className="inline-flex items-center justify-center rounded-lg bg-black dark:bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-gray-800 dark:hover:bg-indigo-500 shadow-xs cursor-pointer"
-            >
-              + Add Task
-            </button>
-          </div>
-
-          {isLoading ? (
-            <div className="py-24 text-center text-xs text-gray-400">
-              Loading calendar schedules...
-            </div>
-          ) : (
-            <CalendarView
-              tasks={filteredTasks}
-              onAddTaskForDate={handleAddTaskForDate}
-              onStatusChange={handleStatusChange}
-            />
-          )}
-        </main>
+            {isLoading ? (
+              <div className="py-24 text-center text-xs text-gray-400">
+                Loading calendar schedules...
+              </div>
+            ) : (
+              <CalendarView
+                tasks={filteredTasks}
+                onAddTaskForDate={handleAddTaskForDate}
+                onStatusChange={handleStatusChange}
+              />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

@@ -6,6 +6,7 @@ import { SummaryCards } from "@/components/SummaryCards";
 import { TaskFormModal } from "@/components/TaskFormModal";
 import { TaskList } from "@/components/TaskList";
 import { Task, TaskPriority, TaskStatus } from "@/types/task";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -13,6 +14,7 @@ import {
   syncSystemTaskNotifications,
 } from "@/utils/notificationStore";
 import { applyTheme, getThemeMode } from "@/utils/themeStore";
+import { getAuthUser, logoutUser } from "@/utils/authStore";
 
 const BACKEND_URLS = ["http://localhost:5000/tasks", "http://localhost:3001/tasks", "http://localhost:3000/tasks"];
 
@@ -77,9 +79,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
-    router.push("/admin/login");
+    logoutUser("/admin/login");
   };
 
   // API Client
@@ -273,11 +273,12 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <main
-      className={`min-h-screen font-sans transition-colors duration-200 ${
-        darkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
-      }`}
-    >
+    <ProtectedRoute allowedRoles={["Admin"]}>
+      <main
+        className={`min-h-screen font-sans transition-colors duration-200 ${
+          darkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
+        }`}
+      >
       {/* Dedicated Admin Dashboard Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-screen w-64 border-r transition-colors duration-200 z-30 hidden md:flex flex-col justify-between ${
@@ -571,5 +572,6 @@ export default function AdminDashboardPage() {
         </div>
       </section>
     </main>
+    </ProtectedRoute>
   );
 }

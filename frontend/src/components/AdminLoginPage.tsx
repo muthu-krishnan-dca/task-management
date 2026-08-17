@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { AuthUser, loginUser } from "@/utils/authStore";
 
 interface AdminLoginPageProps {
-  onAdminLoginSuccess: (admin: { name: string; role: "Admin"; email: string }) => void;
+  onAdminLoginSuccess: (admin: AuthUser) => void;
   onGoToUserLogin: () => void;
 }
 
@@ -13,8 +14,9 @@ export function AdminLoginPage({ onAdminLoginSuccess, onGoToUserLogin }: AdminLo
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
@@ -23,11 +25,22 @@ export function AdminLoginPage({ onAdminLoginSuccess, onGoToUserLogin }: AdminLo
       return;
     }
 
-    onAdminLoginSuccess({
+    setIsLoading(true);
+    const res = await loginUser(email.trim(), password, rememberMe);
+    setIsLoading(false);
+
+    if (!res.success) {
+      setErrorMessage(res.error || "Invalid admin credentials.");
+      return;
+    }
+
+    const adminUser = res.user || {
       name: email.split("@")[0] || "Admin Evaluator",
       role: "Admin",
       email: email.trim(),
-    });
+    };
+
+    onAdminLoginSuccess(adminUser);
   };
 
   return (
