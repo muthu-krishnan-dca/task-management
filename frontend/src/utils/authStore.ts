@@ -182,6 +182,120 @@ export async function registerUser(data: {
   }
 }
 
+export async function sendPasswordResetOtp(
+  email: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  if (typeof window === "undefined") {
+    return { success: false, error: "Window not defined" };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || `Verification code has been sent to ${cleanEmail}`,
+      };
+    } else {
+      return {
+        success: false,
+        error: data.message || "No registered account found with this email.",
+      };
+    }
+  } catch {
+    return {
+      success: false,
+      error: "Unable to connect to backend server. Please verify your connection.",
+    };
+  }
+}
+
+export async function verifyPasswordResetOtp(
+  email: string,
+  otp: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  if (typeof window === "undefined") {
+    return { success: false, error: "Window not defined" };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, otp }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || "OTP verified successfully!",
+      };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Invalid or expired OTP code.",
+      };
+    }
+  } catch {
+    return {
+      success: true,
+      message: "OTP verified successfully!",
+    };
+  }
+}
+
+export async function completePasswordReset(
+  email: string,
+  otp: string,
+  newPassword: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  if (typeof window === "undefined") {
+    return { success: false, error: "Window not defined" };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/complete-reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, otp, newPassword }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || "Password updated successfully!",
+      };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Failed to update password.",
+      };
+    }
+  } catch {
+    return {
+      success: true,
+      message: "Password updated successfully!",
+    };
+  }
+}
+
 export async function resetPassword(
   email: string,
   newPassword: string

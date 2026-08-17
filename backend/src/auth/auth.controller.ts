@@ -16,6 +16,21 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Post('send-otp')
+  async sendOtp(@Body() body: { email: string }) {
+    return this.authService.sendPasswordResetOtp(body.email);
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(@Body() body: { email: string; otp: string }) {
+    return this.authService.verifyPasswordResetOtp(body.email, body.otp);
+  }
+
+  @Post('complete-reset')
+  async completeReset(@Body() body: { email: string; otp: string; newPassword: string }) {
+    return this.authService.completePasswordReset(body);
+  }
+
   @Post('forgot-password')
   async forgotPassword(@Body() body: { email: string; newPassword: string }) {
     return this.authService.resetPassword(body);
