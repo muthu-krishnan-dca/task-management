@@ -2,7 +2,8 @@
 
 import { UserProfile, saveUserProfile, DEFAULT_USER } from "./userStore";
 
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export interface AuthUser {
   id?: string;

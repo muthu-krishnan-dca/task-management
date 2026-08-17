@@ -20,7 +20,8 @@ interface TaskFormData {
   project?: string;
 }
 
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function NotificationsPage() {
   const [showForm, setShowForm] = useState(false);

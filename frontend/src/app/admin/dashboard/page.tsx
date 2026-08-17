@@ -22,11 +22,8 @@ import { applyTheme, getThemeMode } from "@/utils/themeStore";
 import { getAuthUser, logoutUser } from "@/utils/authStore";
 import { saveAppSettings } from "@/utils/settingsStore";
 
-const BACKEND_URLS = [
-  "http://localhost:5000/tasks",
-  "http://localhost:3001/tasks",
-  "http://localhost:3000/tasks",
-];
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 type AdminTab =
   | "dashboard"
@@ -179,7 +176,7 @@ export default function AdminDashboardPage() {
 
     // 2. Fetch fresh list from backend database
     try {
-      const res = await fetch("http://localhost:3001/auth/users");
+     const res = await fetch(`${BACKEND_URL}/auth/users`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -199,16 +196,15 @@ export default function AdminDashboardPage() {
   };
 
   const fetchFromBackend = async (path = "", options?: RequestInit) => {
-    for (const baseUrl of BACKEND_URLS) {
-      try {
-        const res = await fetch(`${baseUrl}${path}`, options);
-        const contentType = res.headers.get("content-type") || "";
-        if (res.ok && contentType.includes("application/json")) {
-          return res;
-        }
-      } catch {
-        // Fallback
+    try {
+      const url = `${BACKEND_URL}/tasks${path.startsWith("/") ? path : path ? `/${path}` : ""}`;
+      const res = await fetch(url, options);
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/json")) {
+        return res;
       }
+    } catch {
+      // Fallback
     }
     throw new Error("Unable to connect to backend server");
   };
@@ -288,7 +284,7 @@ export default function AdminDashboardPage() {
       if (editingUser) {
         const userId = editingUser.id || editingUser._id || encodeURIComponent(editingUser.email);
         try {
-          await fetch(`http://localhost:3001/auth/users/${userId}`, {
+         await fetch(`${BACKEND_URL}/auth/users/${userId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -322,7 +318,7 @@ export default function AdminDashboardPage() {
       } else {
         let newId = `user_${Date.now()}`;
         try {
-          const res = await fetch("http://localhost:3001/auth/register", {
+         const res = await fetch(`${BACKEND_URL}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -373,7 +369,7 @@ export default function AdminDashboardPage() {
     const userId = user.id || user._id || encodeURIComponent(user.email);
 
     try {
-      await fetch(`http://localhost:3001/auth/users/${userId}`, {
+     await fetch(`${BACKEND_URL}/auth/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus, email: user.email }),
@@ -399,7 +395,7 @@ export default function AdminDashboardPage() {
     const userId = user.id || user._id || encodeURIComponent(user.email);
 
     try {
-      await fetch(`http://localhost:3001/auth/users/${userId}`, {
+     await fetch(`${BACKEND_URL}/auth/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole, email: user.email }),
@@ -428,7 +424,7 @@ export default function AdminDashboardPage() {
 
     const userId = user.id || user._id || encodeURIComponent(user.email);
     try {
-      await fetch(`http://localhost:3001/auth/users/${userId}`, { method: "DELETE" });
+      await fetch(`${BACKEND_URL}/auth/users/${userId}`, { method: "DELETE" });
     } catch {}
 
     const updated = usersList.filter(

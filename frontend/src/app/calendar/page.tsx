@@ -20,11 +20,8 @@ interface TaskFormData {
   project?: string;
 }
 
-const BACKEND_URLS = [
-  "http://localhost:5000/tasks",
-  "http://localhost:3001/tasks",
-  "http://localhost:3000/tasks",
-];
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function CalendarPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -36,43 +33,43 @@ export default function CalendarPage() {
 
   const fetchTasksFromBackend = async () => {
     setIsLoading(true);
-    for (const url of BACKEND_URLS) {
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            const formatted: Task[] = data.map((t: any) => ({
-              id: t.id || t._id,
-              title: t.title || "Untitled Task",
-              description: t.description || "",
-              dueDate: t.dueDate || "No due date",
-              dueTime: t.dueTime || "",
-              estimatedTime: t.estimatedTime || "1 hour",
-              status: (t.status || "TODO") as TaskStatus,
-              priority: (t.priority || "MEDIUM") as TaskPriority,
-              project: t.project || "Website Redesign",
-              createdAt: t.createdAt,
-            }));
-            setTasks(formatted);
-            syncSystemTaskNotifications(formatted);
-            setIsLoading(false);
-            return;
-          }
+    try {
+      const res = await fetch(`${BACKEND_URL}/tasks`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const formatted: Task[] = data.map((t: any) => ({
+            id: t.id || t._id,
+            title: t.title || "Untitled Task",
+            description: t.description || "",
+            dueDate: t.dueDate || "No due date",
+            dueTime: t.dueTime || "",
+            estimatedTime: t.estimatedTime || "1 hour",
+            status: (t.status || "TODO") as TaskStatus,
+            priority: (t.priority || "MEDIUM") as TaskPriority,
+            project: t.project || "Website Redesign",
+            createdAt: t.createdAt,
+          }));
+          setTasks(formatted);
+          syncSystemTaskNotifications(formatted);
+          setIsLoading(false);
+          return;
         }
-      } catch {
-        // try next fallback url
       }
+    } catch {
+      // Backend offline
     }
 
     // Fallback if backend offline
-    const saved = localStorage.getItem("ablespace_tasks");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setTasks(parsed);
-        syncSystemTaskNotifications(parsed);
-      } catch {}
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("ablespace_tasks");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setTasks(parsed);
+          syncSystemTaskNotifications(parsed);
+        } catch {}
+      }
     }
     setIsLoading(false);
   };
@@ -85,8 +82,8 @@ export default function CalendarPage() {
     try {
       const isEdit = !!editingTask && !!editingTask.id;
       const url = isEdit
-        ? `http://localhost:3001/tasks/${editingTask.id}`
-        : "http://localhost:3001/tasks";
+        ? `${BACKEND_URL}/tasks/${editingTask.id}`
+        : `${BACKEND_URL}/tasks`;
       const method = isEdit ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -117,8 +114,8 @@ export default function CalendarPage() {
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
     try {
-      await fetch(`http://localhost:3001/tasks/${taskId}/status`, {
-        method: "PATCH",
+      await fetch(`${BACKEND_URL}/tasks/${taskId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
