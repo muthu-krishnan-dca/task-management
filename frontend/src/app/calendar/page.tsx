@@ -184,6 +184,7 @@ export default function CalendarPage() {
             }}
             visibleFields={visibleFields}
             onVisibleFieldsChange={setVisibleFields}
+            tasksToExport={tasks}
           />
 
           {/* Calendar View Content */}

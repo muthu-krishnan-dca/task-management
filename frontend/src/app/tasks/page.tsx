@@ -529,6 +529,7 @@ export default function MyTasksPage() {
             onVisibleFieldsChange={setVisibleFields}
             filters={filters}
             onFiltersChange={setFilters}
+            tasksToExport={filteredTasks}
           />
 
           {/* Body Content */}

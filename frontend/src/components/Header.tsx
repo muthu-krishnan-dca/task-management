@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { VisibleFields, defaultVisibleFields } from "@/types/task";
+import { Task, VisibleFields, defaultVisibleFields } from "@/types/task";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { DEFAULT_USER, getUserProfile, UserProfile } from "@/utils/userStore";
+import { exportTasksToCSV, exportTasksToExcel } from "@/utils/exportUtils";
 import Link from "next/link";
 
 export interface NotificationItem {
@@ -30,6 +31,7 @@ export interface HeaderProps {
   onOpenProfile?: () => void;
   currentUser?: { name: string; role: string; email: string };
   notifications?: NotificationItem[];
+  tasksToExport?: Task[];
 }
 export type TaskStatus =
   | "ALL"
@@ -58,15 +60,19 @@ export function Header({
   },
   onFiltersChange,
   currentUser,
+  tasksToExport = [],
 }: HeaderProps) {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_USER);
   const [showFieldsMenu, setShowFieldsMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const desktopFieldsRef = useRef<HTMLDivElement>(null);
   const mobileFieldsRef = useRef<HTMLDivElement>(null);
   const desktopFilterRef = useRef<HTMLDivElement>(null);
   const mobileFilterRef = useRef<HTMLDivElement>(null);
+  const desktopExportRef = useRef<HTMLDivElement>(null);
+  const mobileExportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setProfile(getUserProfile());
@@ -99,6 +105,14 @@ export function Header({
       if (!clickedInsideFields) {
         setShowFieldsMenu(false);
       }
+
+      const clickedInsideExport =
+        (desktopExportRef.current && desktopExportRef.current.contains(target)) ||
+        (mobileExportRef.current && mobileExportRef.current.contains(target));
+
+      if (!clickedInsideExport) {
+        setShowExportMenu(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -107,7 +121,7 @@ export function Header({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [showFieldsMenu, showFilterMenu]);
+  }, [showFieldsMenu, showFilterMenu, showExportMenu]);
 
   const toggleField = (fieldKey: keyof VisibleFields) => {
     if (!onVisibleFieldsChange) return;
@@ -276,6 +290,67 @@ export function Header({
     </div>
   );
 
+  const handleExportCSVClick = () => {
+    setShowExportMenu(false);
+    if (!tasksToExport || tasksToExport.length === 0) {
+      alert("⚠️ No tasks available to export.");
+      return;
+    }
+    exportTasksToCSV(tasksToExport);
+  };
+
+  const handleExportExcelClick = () => {
+    setShowExportMenu(false);
+    if (!tasksToExport || tasksToExport.length === 0) {
+      alert("⚠️ No tasks available to export.");
+      return;
+    }
+    exportTasksToExcel(tasksToExport);
+  };
+
+  const renderExportDropdown = (align: "left" | "right") => (
+    <div
+      className={`absolute ${
+        align === "right" ? "right-0" : "left-0"
+      } top-10 sm:top-11 z-50 w-52 max-w-[calc(100vw-24px)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100`}
+    >
+      <div className="mb-1.5 border-b border-gray-100 dark:border-gray-700 px-2 pb-1.5">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          Export Tasks ({tasksToExport.length})
+        </p>
+      </div>
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={handleExportCSVClick}
+          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+        >
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 font-bold">
+            📄
+          </span>
+          <div className="text-left">
+            <p className="leading-none">Export as CSV</p>
+            <p className="text-[10px] text-gray-400 font-normal">.csv format</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleExportExcelClick}
+          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+        >
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 font-bold">
+            📊
+          </span>
+          <div className="text-left">
+            <p className="leading-none">Export as Excel</p>
+            <p className="text-[10px] text-gray-400 font-normal">.xlsx spreadsheet</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md">
       
@@ -309,7 +384,7 @@ export function Header({
           </div>
         </div>
 
-        {/* Center/Right Toolbar: Search, Filter, Fields next to Notification */}
+        {/* Center/Right Toolbar: Search, Filter, Fields, Export next to Notification */}
         <div className="hidden md:flex items-center gap-2.5 flex-1 justify-end">
           {/* Search Bar */}
           <div className="relative flex items-center w-64 lg:w-72">
@@ -339,6 +414,7 @@ export function Header({
               onClick={() => {
                 setShowFilterMenu((prev) => !prev);
                 setShowFieldsMenu(false);
+                setShowExportMenu(false);
               }}
               className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
                 showFilterMenu || isFilterActive
@@ -364,6 +440,7 @@ export function Header({
               onClick={() => {
                 setShowFieldsMenu((prev) => !prev);
                 setShowFilterMenu(false);
+                setShowExportMenu(false);
               }}
               className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
                 showFieldsMenu
@@ -378,6 +455,27 @@ export function Header({
             </button>
 
             {showFieldsMenu && renderFieldsDropdown("right")}
+          </div>
+
+          {/* Export Dropdown (Desktop) */}
+          <div className="relative" ref={desktopExportRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowExportMenu((prev) => !prev);
+                setShowFilterMenu(false);
+                setShowFieldsMenu(false);
+              }}
+              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
+                showExportMenu
+                  ? "border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-xs"
+                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
+            >
+              <span>📤 Export</span>
+            </button>
+
+            {showExportMenu && renderExportDropdown("right")}
           </div>
 
           {/* Notifications Bell */}
@@ -431,9 +529,9 @@ export function Header({
 
       </div>
 
-      {/* Tier 2: Dedicated Mobile Action Bar (Search + Filter + Fields + Add Task) */}
-      <div className="flex md:hidden flex-col gap-2 px-3 py-2.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/60">
-        {/* Mobile Full-Width Search Bar */}
+      {/* Mobile Toolbar Sub-Row (Search, Filter, Fields, Export, + Add Task) */}
+      <div className="flex md:hidden flex-col gap-2 border-t border-gray-100 dark:border-gray-800 px-3 py-2.5 bg-gray-50/50 dark:bg-gray-900/50">
+        {/* Mobile Search Bar */}
         <div className="relative flex items-center w-full">
           <span className="absolute left-3 text-xs text-gray-400">🔍</span>
           <input
@@ -455,7 +553,7 @@ export function Header({
           )}
         </div>
 
-        {/* Mobile Quick Action Buttons: Filter, Fields, Add Task */}
+        {/* Mobile Quick Action Buttons: Filter, Fields, Export, Add Task */}
         <div className="flex items-center gap-2">
           {/* Mobile Filter Button */}
           <div className="relative" ref={mobileFilterRef}>
@@ -464,6 +562,7 @@ export function Header({
               onClick={() => {
                 setShowFilterMenu((prev) => !prev);
                 setShowFieldsMenu(false);
+                setShowExportMenu(false);
               }}
               className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
                 showFilterMenu || isFilterActive
@@ -489,6 +588,7 @@ export function Header({
               onClick={() => {
                 setShowFieldsMenu((prev) => !prev);
                 setShowFilterMenu(false);
+                setShowExportMenu(false);
               }}
               className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
                 showFieldsMenu
@@ -503,6 +603,27 @@ export function Header({
             </button>
 
             {showFieldsMenu && renderFieldsDropdown("left")}
+          </div>
+
+          {/* Mobile Export Button */}
+          <div className="relative" ref={mobileExportRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowExportMenu((prev) => !prev);
+                setShowFilterMenu(false);
+                setShowFieldsMenu(false);
+              }}
+              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                showExportMenu
+                  ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300"
+                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+              }`}
+            >
+              <span>📤 Export</span>
+            </button>
+
+            {showExportMenu && renderExportDropdown("left")}
           </div>
 
           {/* Mobile + Add Task Button */}

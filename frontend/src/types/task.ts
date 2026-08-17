@@ -11,6 +11,8 @@ export interface Task {
   dueTime?: string;
   estimatedTime?: string;
   project?: string;
+  assignedTo?: string;
+  assignee?: string;
   createdAt?: string;
   updatedAt?: string;
 }

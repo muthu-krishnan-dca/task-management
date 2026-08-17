@@ -348,6 +348,7 @@ export default function DashboardPage() {
             onVisibleFieldsChange={setVisibleFields}
             filters={filters}
             onFiltersChange={setFilters}
+            tasksToExport={filteredTasks}
           />
 
           {/* Dashboard Body */}

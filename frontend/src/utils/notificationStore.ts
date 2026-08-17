@@ -58,6 +58,74 @@ export function saveStoredNotifications(
   }
 }
 
+// Soft Web Audio synthesized notification chime
+export function playNotificationChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+
+    const now = ctx.currentTime;
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc1.type = "sine";
+    osc2.type = "sine";
+
+    // Pleasant two-tone chime (D5 -> A5)
+    osc1.frequency.setValueAtTime(587.33, now);
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+
+    osc2.frequency.setValueAtTime(880, now + 0.12);
+    osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.28);
+
+    gainNode.gain.setValueAtTime(0.001, now);
+    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.04);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc1.start(now);
+    osc1.stop(now + 0.15);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.45);
+  } catch (err) {
+    // Audio context may be restricted by browser until user interaction
+  }
+}
+
+// Request Browser Desktop Push Notification Permission
+export async function requestDesktopNotificationPermission(): Promise<boolean> {
+  if (typeof window === "undefined" || !("Notification" in window)) return false;
+  try {
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission !== "denied") {
+      const permission = await Notification.requestPermission();
+      return permission === "granted";
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// Send Real Desktop OS Notification
+export function sendDesktopNotification(title: string, body: string) {
+  if (typeof window === "undefined" || !("Notification" in window)) return;
+  try {
+    if (Notification.permission === "granted") {
+      new Notification(title, {
+        body,
+        icon: "/favicon.ico",
+      });
+    }
+  } catch {}
+}
+
 export function createNotification(params: {
   title: string;
   message: string;
@@ -107,6 +175,20 @@ export function createNotification(params: {
 
   const updated = [newNotification, ...existing];
   saveStoredNotifications(updated);
+
+  // Play real chime sound
+  playNotificationChime();
+
+  // Send real desktop notification if enabled
+  sendDesktopNotification(params.title, params.message);
+
+  // Dispatch custom event for real-time floating toaster
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("newNotificationReceived", { detail: newNotification })
+    );
+  }
+
   return newNotification;
 }
 

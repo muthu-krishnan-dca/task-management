@@ -4,7 +4,9 @@ export type NotificationType =
   | "TASK_COMPLETED"
   | "STATUS_CHANGED"
   | "TASK_OVERDUE"
-  | "TASK_DUE_SOON";
+  | "TASK_DUE_SOON"
+  | "SYSTEM_ANNOUNCEMENT"
+  | "ADMIN_BROADCAST";
 
 export interface NotificationItem {
   id: string;
@@ -14,4 +16,5 @@ export interface NotificationItem {
   taskId?: string;
   createdAt: string;
   read: boolean;
+  target?: string;
 }

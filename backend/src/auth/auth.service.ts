@@ -125,4 +125,60 @@ export class AuthService implements OnModuleInit {
       avatarUrl: user.avatarUrl,
     };
   }
+
+  async getAllUsers() {
+    const users = await this.userModel.find().sort({ createdAt: -1 });
+    return users.map((u) => ({
+      id: u._id.toString(),
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      phone: u.phone,
+      avatarUrl: u.avatarUrl,
+      status: 'Active',
+    }));
+  }
+
+  async updateUser(id: string, updateData: { name?: string; email?: string; password?: string; role?: string; phone?: string; status?: string }) {
+    let user = null;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      user = await this.userModel.findById(id);
+    }
+    if (!user && updateData.email) {
+      user = await this.userModel.findOne({ email: updateData.email.toLowerCase().trim() });
+    }
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (updateData.name) user.name = updateData.name.trim();
+    if (updateData.email) user.email = updateData.email.toLowerCase().trim();
+    if (updateData.password && updateData.password.trim()) user.password = updateData.password.trim();
+    if (updateData.role) user.role = updateData.role;
+    if (updateData.phone !== undefined) user.phone = updateData.phone;
+    await user.save();
+    return {
+      success: true,
+      message: 'User updated successfully',
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        avatarUrl: user.avatarUrl,
+        status: 'Active',
+      },
+    };
+  }
+
+  async deleteUser(id: string) {
+    let res = null;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      res = await this.userModel.findByIdAndDelete(id);
+    }
+    if (!res) {
+      res = await this.userModel.findOneAndDelete({ email: id.toLowerCase().trim() });
+    }
+    return { success: true, message: 'User removed successfully' };
+  }
 }

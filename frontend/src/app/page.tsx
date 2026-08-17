@@ -533,6 +533,7 @@ const handleStatusChange = async (
             onVisibleFieldsChange={setVisibleFields}
             filters={filters}
             onFiltersChange={setFilters}
+            tasksToExport={filteredTasks}
           />
 
           {/* Content */}

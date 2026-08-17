@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { UserLoginPage } from "@/components/UserLoginPage";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AuthUser, isAuthenticated } from "@/utils/authStore";
+import { AuthUser, getAuthUser, isAuthenticated } from "@/utils/authStore";
 import { useEffect } from "react";
 
 function LoginContent() {
@@ -14,18 +14,27 @@ function LoginContent() {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      const target = redirectParam ? decodeURIComponent(redirectParam) : "/Dashboard";
-      router.replace(target);
+      const user = getAuthUser();
+      if (redirectParam) {
+        router.replace(decodeURIComponent(redirectParam));
+      } else if (user?.role === "Admin") {
+        router.replace("/admin/dashboard");
+      } else {
+        router.replace("/Dashboard");
+      }
     }
   }, [router, redirectParam]);
 
   const handleLoginSuccess = (user: AuthUser) => {
-    if (user.role === "Admin" && (!redirectParam || redirectParam === "/")) {
-      router.push("/Dashboard");
+    if (redirectParam) {
+      router.push(decodeURIComponent(redirectParam));
       return;
     }
-    const target = redirectParam ? decodeURIComponent(redirectParam) : "/Dashboard";
-    router.push(target);
+    if (user.role === "Admin") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/Dashboard");
+    }
   };
 
   return (
