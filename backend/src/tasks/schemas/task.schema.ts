@@ -41,6 +41,12 @@ export class Task {
   @Prop()
   project?: string;
 
+  @Prop({ index: true })
+  userId?: string;
+
+  @Prop({ index: true })
+  userEmail?: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

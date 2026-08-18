@@ -21,6 +21,8 @@ interface TaskFormData {
   project?: string;
 }
 
+import { attachUserToTaskPayload } from "@/utils/authStore";
+
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -39,7 +41,7 @@ export default function SettingsPage() {
       const response = await fetch(`${BACKEND_URL}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskData),
+        body: JSON.stringify(attachUserToTaskPayload(taskData)),
       });
 
       if (!response.ok) throw new Error("Failed to create task");

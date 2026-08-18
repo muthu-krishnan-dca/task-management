@@ -46,6 +46,11 @@ export class AuthController {
     return this.authService.getProfile(email);
   }
 
+  @Patch('profile')
+  async updateProfile(@Body() body: { email: string; name?: string; phone?: string; avatarUrl?: string }) {
+    return this.authService.updateProfile(body);
+  }
+
   @Get('users')
   async getAllUsers() {
     return this.authService.getAllUsers();

@@ -12,6 +12,7 @@ import {
   createNotification,
   syncSystemTaskNotifications,
 } from "@/utils/notificationStore";
+import { getTasksRequestUrl, attachUserToTaskPayload } from "@/utils/authStore";
 
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
@@ -94,7 +95,7 @@ export default function Home() {
     const loadTasks = async () => {
       try {
         const response = await fetch(
-          `${BACKEND_URL}/tasks`
+          getTasksRequestUrl()
         );
 
         if (!response.ok) {
@@ -214,7 +215,7 @@ export default function Home() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(taskData),
+          body: JSON.stringify(attachUserToTaskPayload(taskData)),
         }
       );
 

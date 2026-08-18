@@ -19,10 +19,10 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Seed default admin and user if database is empty
+    // Ensure default admin exists if database has no accounts
     try {
-      const count = await this.userModel.countDocuments();
-      if (count === 0) {
+      const adminExists = await this.userModel.findOne({ role: 'Admin' });
+      if (!adminExists) {
         await this.userModel.create({
           name: 'Administrator',
           email: 'admin@ablespace.io',
@@ -31,17 +31,9 @@ export class AuthService implements OnModuleInit {
           phone: '+91 98765 43210',
           avatarUrl: '',
         });
-        await this.userModel.create({
-          name: 'User Evaluator',
-          email: 'user@ablespace.io',
-          password: 'user',
-          role: 'User',
-          phone: '+91 98765 00000',
-          avatarUrl: '',
-        });
       }
     } catch (err) {
-      console.warn('Could not seed initial users:', err);
+      console.warn('Could not initialize admin account:', err);
     }
   }
 
@@ -300,7 +292,34 @@ export class AuthService implements OnModuleInit {
     }));
   }
 
-  async updateUser(id: string, updateData: { name?: string; email?: string; password?: string; role?: string; phone?: string; status?: string }) {
+  async updateProfile(data: { email: string; name?: string; phone?: string; avatarUrl?: string }) {
+    const cleanEmail = (data.email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      throw new NotFoundException('Email address is required.');
+    }
+    const user = await this.userModel.findOne({ email: cleanEmail });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (data.name) user.name = data.name.trim();
+    if (data.phone !== undefined) user.phone = data.phone;
+    if (data.avatarUrl !== undefined) user.avatarUrl = data.avatarUrl;
+    await user.save();
+    return {
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        avatarUrl: user.avatarUrl,
+      },
+    };
+  }
+
+  async updateUser(id: string, updateData: { name?: string; email?: string; password?: string; role?: string; phone?: string; avatarUrl?: string; status?: string }) {
     let user: any = null;
     if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
       user = await this.userModel.findById(id);
@@ -316,6 +335,7 @@ export class AuthService implements OnModuleInit {
     if (updateData.password && updateData.password.trim()) user.password = updateData.password.trim();
     if (updateData.role) user.role = updateData.role;
     if (updateData.phone !== undefined) user.phone = updateData.phone;
+    if (updateData.avatarUrl !== undefined) user.avatarUrl = updateData.avatarUrl;
     await user.save();
     return {
       success: true,

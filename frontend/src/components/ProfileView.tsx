@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { getUserProfile, saveUserProfile, UserProfile } from "@/utils/userStore";
 
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 interface ProfileViewProps {
   currentUser?: { name: string; role: string; email: string };
   onUpdateUser?: (updated: { name: string; email: string }) => void;
@@ -57,6 +60,18 @@ export function ProfileView({
     };
   }, []);
 
+  const syncBackendProfile = async (data: { email: string; name?: string; phone?: string; avatarUrl?: string }) => {
+    try {
+      await fetch(`${BACKEND_URL}/auth/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (e) {
+      console.warn("Backend profile sync optional:", e);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -68,8 +83,9 @@ export function ProfileView({
       reader.onloadend = () => {
         const base64Url = reader.result as string;
         setAvatarUrl(base64Url);
-        saveUserProfile({ avatarUrl: base64Url });
+        const updated = saveUserProfile({ avatarUrl: base64Url });
         onUpdateAvatar?.(base64Url);
+        syncBackendProfile({ email: updated.email, avatarUrl: base64Url });
         triggerToast("Profile picture updated! 📸");
       };
       reader.readAsDataURL(file);
@@ -78,8 +94,9 @@ export function ProfileView({
 
   const handleRemoveImage = () => {
     setAvatarUrl("");
-    saveUserProfile({ avatarUrl: "" });
+    const updated = saveUserProfile({ avatarUrl: "" });
     onUpdateAvatar?.("");
+    syncBackendProfile({ email: updated.email, avatarUrl: "" });
     triggerToast("Profile picture removed! 🗑️");
   };
 
@@ -111,11 +128,18 @@ export function ProfileView({
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
+      avatarUrl: avatarUrl,
     });
 
     setProfile(updated);
     setIsEditing(false);
     onUpdateUser?.({ name: updated.name, email: updated.email });
+    syncBackendProfile({
+      email: updated.email,
+      name: updated.name,
+      phone: updated.phone,
+      avatarUrl: updated.avatarUrl,
+    });
     triggerToast("Profile updated successfully! ✨");
   };
 

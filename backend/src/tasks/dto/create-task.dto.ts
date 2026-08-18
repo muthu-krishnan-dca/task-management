@@ -46,4 +46,12 @@ export class CreateTaskDto {
   @IsOptional()
   @IsString()
   project?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  userEmail?: string;
 }

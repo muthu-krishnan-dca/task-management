@@ -17,29 +17,32 @@ export const DEFAULT_USER: UserProfile = {
 export function getUserProfile(): UserProfile {
   if (typeof window === "undefined") return DEFAULT_USER;
   try {
+    const userRaw = localStorage.getItem("user");
     const raw = localStorage.getItem("userProfile");
-    if (!raw) {
-      // Check legacy "user" key if present
-      const legacy = localStorage.getItem("user");
-      if (legacy) {
-        const parsed = JSON.parse(legacy);
-        return {
-          name: parsed.name || DEFAULT_USER.name,
-          email: parsed.email || DEFAULT_USER.email,
-          role: parsed.role || DEFAULT_USER.role,
-          phone: parsed.phone || DEFAULT_USER.phone,
-          avatarUrl: localStorage.getItem("userAvatar") || "",
-        };
-      }
-      return DEFAULT_USER;
+
+    let parsed: any = {};
+    if (userRaw) {
+      try {
+        parsed = { ...JSON.parse(userRaw), ...parsed };
+      } catch {}
     }
-    const parsed = JSON.parse(raw);
+    if (raw) {
+      try {
+        parsed = { ...parsed, ...JSON.parse(raw) };
+      } catch {}
+    }
+
+    const cleanEmail = (parsed.email || DEFAULT_USER.email).toLowerCase().trim();
+    const storedEmailAvatar = cleanEmail ? localStorage.getItem(`userAvatar_${cleanEmail}`) : null;
+    const globalAvatar = localStorage.getItem("userAvatar");
+    const avatarUrl = parsed.avatarUrl || storedEmailAvatar || globalAvatar || "";
+
     return {
       name: parsed.name || DEFAULT_USER.name,
       email: parsed.email || DEFAULT_USER.email,
       role: parsed.role || DEFAULT_USER.role,
       phone: parsed.phone || DEFAULT_USER.phone,
-      avatarUrl: parsed.avatarUrl || localStorage.getItem("userAvatar") || "",
+      avatarUrl,
     };
   } catch {
     return DEFAULT_USER;
@@ -53,10 +56,43 @@ export function saveUserProfile(profile: Partial<UserProfile>): UserProfile {
     ...current,
     ...profile,
   };
+
+  const cleanEmail = (updated.email || "").toLowerCase().trim();
+
+  // Save current profile
   localStorage.setItem("userProfile", JSON.stringify(updated));
-  if (profile.avatarUrl !== undefined) {
-    localStorage.setItem("userAvatar", profile.avatarUrl);
+
+  // Save email-scoped profile and avatar for persistence across logouts
+  if (cleanEmail) {
+    localStorage.setItem(`userProfile_${cleanEmail}`, JSON.stringify(updated));
+    if (updated.avatarUrl !== undefined) {
+      localStorage.setItem(`userAvatar_${cleanEmail}`, updated.avatarUrl);
+    }
   }
+
+  if (updated.avatarUrl !== undefined) {
+    localStorage.setItem("userAvatar", updated.avatarUrl);
+  }
+
+  // Also sync to active "user" key in localStorage
+  try {
+    const userRaw = localStorage.getItem("user");
+    if (userRaw) {
+      const activeUser = JSON.parse(userRaw);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...activeUser,
+          name: updated.name,
+          email: updated.email,
+          phone: updated.phone,
+          avatarUrl: updated.avatarUrl,
+        })
+      );
+    }
+  } catch {}
+
   window.dispatchEvent(new Event("userProfileUpdated"));
+  window.dispatchEvent(new Event("authChanged"));
   return updated;
 }

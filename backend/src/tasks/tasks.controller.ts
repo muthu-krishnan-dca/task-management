@@ -22,8 +22,10 @@ export class TasksController {
     @Query('search') search?: string,
     @Query('status') status?: string,
     @Query('priority') priority?: string,
+    @Query('userId') userId?: string,
+    @Query('userEmail') userEmail?: string,
   ): Promise<Task[]> {
-    return this.tasksService.findAll(search, status, priority);
+    return this.tasksService.findAll(search, status, priority, userId, userEmail);
   }
 
   @Get(':id')
@@ -42,6 +44,11 @@ export class TasksController {
     @Body() updateTaskDto: UpdateTaskDto,
   ): Promise<Task> {
     return this.tasksService.update(id, updateTaskDto);
+  }
+
+  @Delete()
+  async removeAll(): Promise<{ success: boolean; count: number }> {
+    return this.tasksService.removeAll();
   }
 
   @Delete(':id')

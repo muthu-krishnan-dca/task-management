@@ -6,6 +6,7 @@ import { NotificationDropdown } from "./NotificationDropdown";
 import { DEFAULT_USER, getUserProfile, UserProfile } from "@/utils/userStore";
 import { exportTasksToCSV, exportTasksToExcel } from "@/utils/exportUtils";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export interface NotificationItem {
   id: string;
@@ -32,6 +33,8 @@ export interface HeaderProps {
   currentUser?: { name: string; role: string; email: string };
   notifications?: NotificationItem[];
   tasksToExport?: Task[];
+  onToggleMobileMenu?: () => void;
+  showTaskControls?: boolean;
 }
 export type TaskStatus =
   | "ALL"
@@ -61,7 +64,17 @@ export function Header({
   onFiltersChange,
   currentUser,
   tasksToExport = [],
+  onToggleMobileMenu,
+  showTaskControls,
 }: HeaderProps) {
+  const pathname = usePathname();
+  const isTasksPage =
+    showTaskControls !== undefined
+      ? showTaskControls
+      : pathname === "/" ||
+        pathname?.toLowerCase() === "/tasks" ||
+        pathname?.toLowerCase().startsWith("/tasks");
+
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_USER);
   const [showFieldsMenu, setShowFieldsMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -76,58 +89,46 @@ export function Header({
 
   useEffect(() => {
     setProfile(getUserProfile());
-    const handleProfileUpdate = () => {
-      setProfile(getUserProfile());
-    };
-    window.addEventListener("userProfileUpdated", handleProfileUpdate);
+    const handleUpdate = () => setProfile(getUserProfile());
+    window.addEventListener("userProfileUpdated", handleUpdate);
+    window.addEventListener("authChanged", handleUpdate);
     return () => {
-      window.removeEventListener("userProfileUpdated", handleProfileUpdate);
+      window.removeEventListener("userProfileUpdated", handleUpdate);
+      window.removeEventListener("authChanged", handleUpdate);
     };
   }, []);
 
-  // Close menus on outside click or touch
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+    const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-
-      const clickedInsideFilter =
-        (desktopFilterRef.current && desktopFilterRef.current.contains(target)) ||
-        (mobileFilterRef.current && mobileFilterRef.current.contains(target));
-
-      if (!clickedInsideFilter) {
-        setShowFilterMenu(false);
-      }
-
-      const clickedInsideFields =
-        (desktopFieldsRef.current && desktopFieldsRef.current.contains(target)) ||
-        (mobileFieldsRef.current && mobileFieldsRef.current.contains(target));
-
-      if (!clickedInsideFields) {
+      if (
+        !desktopFieldsRef.current?.contains(target) &&
+        !mobileFieldsRef.current?.contains(target)
+      ) {
         setShowFieldsMenu(false);
       }
-
-      const clickedInsideExport =
-        (desktopExportRef.current && desktopExportRef.current.contains(target)) ||
-        (mobileExportRef.current && mobileExportRef.current.contains(target));
-
-      if (!clickedInsideExport) {
+      if (
+        !desktopFilterRef.current?.contains(target) &&
+        !mobileFilterRef.current?.contains(target)
+      ) {
+        setShowFilterMenu(false);
+      }
+      if (
+        !desktopExportRef.current?.contains(target) &&
+        !mobileExportRef.current?.contains(target)
+      ) {
         setShowExportMenu(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, [showFieldsMenu, showFilterMenu, showExportMenu]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const toggleField = (fieldKey: keyof VisibleFields) => {
+  const toggleField = (field: keyof VisibleFields) => {
     if (!onVisibleFieldsChange) return;
     onVisibleFieldsChange({
       ...visibleFields,
-      [fieldKey]: !visibleFields[fieldKey],
+      [field]: !visibleFields[field],
     });
   };
 
@@ -353,16 +354,22 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md">
-      
       {/* Top Navbar Row */}
       <div className="flex h-14 sm:h-16 w-full items-center justify-between px-3 sm:px-6 gap-3">
-        
         {/* Left: Mobile Drawer Button & Brand */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {/* Mobile Hamburger Toggle */}
           <button
             type="button"
-            onClick={() => window.dispatchEvent(new Event("toggleMobileSidebar"))}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onToggleMobileMenu) {
+                onToggleMobileMenu();
+              } else {
+                window.dispatchEvent(new Event("toggleMobileSidebar"));
+              }
+            }}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition md:hidden cursor-pointer shadow-xs"
             aria-label="Toggle navigation menu"
           >
@@ -407,88 +414,96 @@ export function Header({
             )}
           </div>
 
-          {/* Filter Dropdown (Desktop) */}
-          <div className="relative" ref={desktopFilterRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowFilterMenu((prev) => !prev);
-                setShowFieldsMenu(false);
-                setShowExportMenu(false);
-              }}
-              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
-                showFilterMenu || isFilterActive
-                  ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-xs"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              }`}
-            >
-              <span>🌪️ Filter</span>
-              {isFilterActive && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
-                  !
+          {/* Filter Dropdown (Desktop) - Tasks Page Only */}
+          {isTasksPage && (
+            <div className="relative" ref={desktopFilterRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFilterMenu((prev) => !prev);
+                  setShowFieldsMenu(false);
+                  setShowExportMenu(false);
+                }}
+                className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
+                  showFilterMenu || isFilterActive
+                    ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
+              >
+                <span>🌪️ Filter</span>
+                {isFilterActive && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+                    !
+                  </span>
+                )}
+              </button>
+
+              {showFilterMenu && renderFilterDropdown("right")}
+            </div>
+          )}
+
+          {/* Fields Dropdown (Desktop) - Tasks Page Only */}
+          {isTasksPage && (
+            <div className="relative" ref={desktopFieldsRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFieldsMenu((prev) => !prev);
+                  setShowFilterMenu(false);
+                  setShowExportMenu(false);
+                }}
+                className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
+                  showFieldsMenu
+                    ? "border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
+              >
+                <span>⚙️ Fields</span>
+                <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] text-gray-700 dark:text-gray-200 font-bold">
+                  {activeCount}
                 </span>
-              )}
-            </button>
+              </button>
 
-            {showFilterMenu && renderFilterDropdown("right")}
-          </div>
+              {showFieldsMenu && renderFieldsDropdown("right")}
+            </div>
+          )}
 
-          {/* Fields Dropdown (Desktop) */}
-          <div className="relative" ref={desktopFieldsRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowFieldsMenu((prev) => !prev);
-                setShowFilterMenu(false);
-                setShowExportMenu(false);
-              }}
-              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
-                showFieldsMenu
-                  ? "border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              }`}
-            >
-              <span>⚙️ Fields</span>
-              <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] text-gray-700 dark:text-gray-200 font-bold">
-                {activeCount}
-              </span>
-            </button>
+          {/* Export Dropdown (Desktop) - Tasks Page Only */}
+          {isTasksPage && (
+            <div className="relative" ref={desktopExportRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowExportMenu((prev) => !prev);
+                  setShowFilterMenu(false);
+                  setShowFieldsMenu(false);
+                }}
+                className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
+                  showExportMenu
+                    ? "border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-xs"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
+              >
+                <span>📤 Export</span>
+              </button>
 
-            {showFieldsMenu && renderFieldsDropdown("right")}
-          </div>
-
-          {/* Export Dropdown (Desktop) */}
-          <div className="relative" ref={desktopExportRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowExportMenu((prev) => !prev);
-                setShowFilterMenu(false);
-                setShowFieldsMenu(false);
-              }}
-              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-colors cursor-pointer ${
-                showExportMenu
-                  ? "border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-xs"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              }`}
-            >
-              <span>📤 Export</span>
-            </button>
-
-            {showExportMenu && renderExportDropdown("right")}
-          </div>
+              {showExportMenu && renderExportDropdown("right")}
+            </div>
+          )}
 
           {/* Notifications Bell */}
           <NotificationDropdown />
 
           {/* Add Task Button (Desktop) */}
-          <button
-            type="button"
-            onClick={onAddTask}
-            className="hidden sm:inline-flex items-center justify-center rounded-xl bg-black dark:bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-gray-800 dark:hover:bg-indigo-500 transition shadow-xs cursor-pointer"
-          >
-            + Add Task
-          </button>
+          {onAddTask && (
+            <button
+              type="button"
+              onClick={onAddTask}
+              className="hidden sm:inline-flex items-center justify-center rounded-xl bg-black dark:bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-gray-800 dark:hover:bg-indigo-500 transition shadow-xs cursor-pointer"
+            >
+              + Add Task
+            </button>
+          )}
 
           {/* Profile Avatar */}
           <Link
@@ -526,118 +541,128 @@ export function Header({
             )}
           </Link>
         </div>
-
       </div>
 
       {/* Mobile Toolbar Sub-Row (Search, Filter, Fields, Export, + Add Task) */}
-      <div className="flex md:hidden flex-col gap-2 border-t border-gray-100 dark:border-gray-800 px-3 py-2.5 bg-gray-50/50 dark:bg-gray-900/50">
-        {/* Mobile Search Bar */}
-        <div className="relative flex items-center w-full">
-          <span className="absolute left-3 text-xs text-gray-400">🔍</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search tasks, project, priority..."
-            className="h-9 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-8 pr-8 text-xs text-gray-800 dark:text-gray-100 placeholder-gray-400 outline-none focus:border-indigo-500 shadow-xs"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => onSearchChange("")}
-              className="absolute right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] text-gray-500 dark:text-gray-300"
-              title="Clear search"
-            >
-              ✕
-            </button>
+      {(isTasksPage || onAddTask || searchQuery) && (
+        <div className="flex md:hidden flex-col gap-2 border-t border-gray-100 dark:border-gray-800 px-3 py-2.5 bg-gray-50/50 dark:bg-gray-900/50">
+          {/* Mobile Search Bar */}
+          <div className="relative flex items-center w-full">
+            <span className="absolute left-3 text-xs text-gray-400">🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search tasks, project, priority..."
+              className="h-9 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-8 pr-8 text-xs text-gray-800 dark:text-gray-100 placeholder-gray-400 outline-none focus:border-indigo-500 shadow-xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                className="absolute right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] text-gray-500 dark:text-gray-300"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Quick Action Buttons */}
+          {(isTasksPage || onAddTask) && (
+            <div className="flex items-center gap-2">
+              {/* Mobile Filter Button - Tasks Page Only */}
+              {isTasksPage && (
+                <div className="relative" ref={mobileFilterRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFilterMenu((prev) => !prev);
+                      setShowFieldsMenu(false);
+                      setShowExportMenu(false);
+                    }}
+                    className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                      showFilterMenu || isFilterActive
+                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300"
+                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <span>🌪️ Filter</span>
+                    {isFilterActive && (
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+                        !
+                      </span>
+                    )}
+                  </button>
+
+                  {showFilterMenu && renderFilterDropdown("left")}
+                </div>
+              )}
+
+              {/* Mobile Fields Button - Tasks Page Only */}
+              {isTasksPage && (
+                <div className="relative" ref={mobileFieldsRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFieldsMenu((prev) => !prev);
+                      setShowFilterMenu(false);
+                      setShowExportMenu(false);
+                    }}
+                    className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                      showFieldsMenu
+                        ? "border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <span>⚙️ Fields</span>
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] text-gray-700 dark:text-gray-200 font-bold">
+                      {activeCount}
+                    </span>
+                  </button>
+
+                  {showFieldsMenu && renderFieldsDropdown("left")}
+                </div>
+              )}
+
+              {/* Mobile Export Button - Tasks Page Only */}
+              {isTasksPage && (
+                <div className="relative" ref={mobileExportRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExportMenu((prev) => !prev);
+                      setShowFilterMenu(false);
+                      setShowFieldsMenu(false);
+                    }}
+                    className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                      showExportMenu
+                        ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300"
+                        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <span>📤 Export</span>
+                  </button>
+
+                  {showExportMenu && renderExportDropdown("left")}
+                </div>
+              )}
+
+              {/* Mobile + Add Task Button */}
+              {onAddTask && (
+                <button
+                  type="button"
+                  onClick={onAddTask}
+                  className="flex h-8 items-center justify-center gap-1 rounded-lg bg-black dark:bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-gray-800 dark:hover:bg-indigo-500 transition shrink-0 shadow-xs cursor-pointer ml-auto"
+                >
+                  <span>+</span>
+                  <span>Add Task</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
-
-        {/* Mobile Quick Action Buttons: Filter, Fields, Export, Add Task */}
-        <div className="flex items-center gap-2">
-          {/* Mobile Filter Button */}
-          <div className="relative" ref={mobileFilterRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowFilterMenu((prev) => !prev);
-                setShowFieldsMenu(false);
-                setShowExportMenu(false);
-              }}
-              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
-                showFilterMenu || isFilterActive
-                  ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-              }`}
-            >
-              <span>🌪️ Filter</span>
-              {isFilterActive && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
-                  !
-                </span>
-              )}
-            </button>
-
-            {showFilterMenu && renderFilterDropdown("left")}
-          </div>
-
-          {/* Mobile Fields Button */}
-          <div className="relative" ref={mobileFieldsRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowFieldsMenu((prev) => !prev);
-                setShowFilterMenu(false);
-                setShowExportMenu(false);
-              }}
-              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
-                showFieldsMenu
-                  ? "border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-              }`}
-            >
-              <span>⚙️ Fields</span>
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-[10px] text-gray-700 dark:text-gray-200 font-bold">
-                {activeCount}
-              </span>
-            </button>
-
-            {showFieldsMenu && renderFieldsDropdown("left")}
-          </div>
-
-          {/* Mobile Export Button */}
-          <div className="relative" ref={mobileExportRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowExportMenu((prev) => !prev);
-                setShowFilterMenu(false);
-                setShowFieldsMenu(false);
-              }}
-              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
-                showExportMenu
-                  ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-              }`}
-            >
-              <span>📤 Export</span>
-            </button>
-
-            {showExportMenu && renderExportDropdown("left")}
-          </div>
-
-          {/* Mobile + Add Task Button */}
-          <button
-            type="button"
-            onClick={onAddTask}
-            className="flex h-8 items-center justify-center gap-1 rounded-lg bg-black dark:bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-gray-800 dark:hover:bg-indigo-500 transition shrink-0 shadow-xs cursor-pointer ml-auto"
-          >
-            <span>+</span>
-            <span>Add Task</span>
-          </button>
-        </div>
-      </div>
-
+      )}
     </header>
   );
 }

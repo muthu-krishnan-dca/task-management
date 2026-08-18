@@ -32,13 +32,18 @@ export function getAuthUser(): AuthUser | null {
     const userRaw = localStorage.getItem("user");
     if (!userRaw) return null;
     const parsed = JSON.parse(userRaw);
+    const cleanEmail = (parsed.email || "").toLowerCase().trim();
+    const storedEmailAvatar = cleanEmail ? localStorage.getItem(`userAvatar_${cleanEmail}`) : null;
+    const globalAvatar = localStorage.getItem("userAvatar");
+    const avatarUrl = parsed.avatarUrl || storedEmailAvatar || globalAvatar || "";
+
     return {
       id: parsed.id,
       name: parsed.name || "User",
       email: parsed.email || "",
       role: parsed.role || "User",
       phone: parsed.phone || "",
-      avatarUrl: parsed.avatarUrl || localStorage.getItem("userAvatar") || "",
+      avatarUrl,
       token: localStorage.getItem("authToken") || undefined,
     };
   } catch {
@@ -337,19 +342,31 @@ export async function resetPassword(
 export function setSession(user: AuthUser, rememberMe: boolean = true) {
   if (typeof window === "undefined") return;
 
+  const cleanEmail = (user.email || "").toLowerCase().trim();
+  const storedAvatar = (cleanEmail ? localStorage.getItem(`userAvatar_${cleanEmail}`) : null) || localStorage.getItem("userAvatar") || "";
+  const finalAvatar = user.avatarUrl || storedAvatar;
+
+  const updatedUser: AuthUser = {
+    ...user,
+    avatarUrl: finalAvatar,
+  };
+
   localStorage.setItem("isLoggedIn", "true");
-  localStorage.setItem("user", JSON.stringify(user));
-  if (user.token) {
-    localStorage.setItem("authToken", user.token);
+  localStorage.setItem("user", JSON.stringify(updatedUser));
+  if (updatedUser.token) {
+    localStorage.setItem("authToken", updatedUser.token);
+  }
+  if (finalAvatar && cleanEmail) {
+    localStorage.setItem(`userAvatar_${cleanEmail}`, finalAvatar);
   }
 
   // Sync with userStore
   saveUserProfile({
-    name: user.name,
-    email: user.email,
-    role: user.role === "Admin" ? "Administrator" : user.role,
-    phone: user.phone || "",
-    avatarUrl: user.avatarUrl || "",
+    name: updatedUser.name,
+    email: updatedUser.email,
+    role: updatedUser.role === "Admin" ? "Administrator" : updatedUser.role,
+    phone: updatedUser.phone || "",
+    avatarUrl: finalAvatar,
   });
 
   window.dispatchEvent(new Event("authChanged"));
@@ -370,3 +387,38 @@ export function logoutUser(redirectPath: string = "/login") {
     window.location.href = redirectPath;
   }
 }
+
+/**
+ * Builds the URL for fetching/mutating tasks with user filtering.
+ * Admins get all tasks, regular users get only their own tasks.
+ */
+export function getTasksRequestUrl(path: string = ""): string {
+  const user = getAuthUser();
+  const cleanPath = path ? (path.startsWith("/") || path.startsWith("?") ? path : `/${path}`) : "";
+  const base = `${BACKEND_URL}/tasks${cleanPath}`;
+
+  if (!user || user.role === "Admin") {
+    return base;
+  }
+
+  const separator = base.includes("?") ? "&" : "?";
+  const params: string[] = [];
+  if (user.id) params.push(`userId=${encodeURIComponent(user.id)}`);
+  if (user.email) params.push(`userEmail=${encodeURIComponent(user.email)}`);
+
+  return params.length > 0 ? `${base}${separator}${params.join("&")}` : base;
+}
+
+/**
+ * Attaches the logged in user's id and email to a task payload if not already set.
+ */
+export function attachUserToTaskPayload<T extends Record<string, any>>(payload: T): T {
+  const user = getAuthUser();
+  if (!user) return payload;
+  return {
+    ...payload,
+    userId: payload.userId || user.id,
+    userEmail: payload.userEmail || user.email,
+  };
+}
+

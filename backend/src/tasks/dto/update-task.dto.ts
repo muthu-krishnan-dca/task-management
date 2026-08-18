@@ -22,4 +22,12 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   dueDate?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  userEmail?: string;
 }

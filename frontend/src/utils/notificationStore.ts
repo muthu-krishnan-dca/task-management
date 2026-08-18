@@ -1,8 +1,18 @@
 import { NotificationItem, NotificationType } from "@/types/notification";
 import { Task } from "@/types/task";
 import { getAppSettings } from "./settingsStore";
+import { getAuthUser } from "./authStore";
 
-const STORAGE_KEY = "ablespace_notifications";
+export function getNotificationStorageKey(): string {
+  if (typeof window === "undefined") return "ablespace_notifications";
+  try {
+    const user = getAuthUser();
+    if (user && user.email) {
+      return `ablespace_notifications_${user.email.toLowerCase().trim()}`;
+    }
+  } catch {}
+  return "ablespace_notifications_guest";
+}
 
 // Deduplicate notifications list
 export function deduplicateNotifications(
@@ -34,7 +44,8 @@ export function deduplicateNotifications(
 export function getStoredNotifications(): NotificationItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const key = getNotificationStorageKey();
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -50,8 +61,9 @@ export function saveStoredNotifications(
 ): void {
   if (typeof window === "undefined") return;
   try {
-    const deduplicated = deduplicateNotifications(notifications).slice(0, 100);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(deduplicated));
+    const key = getNotificationStorageKey();
+    const deduplicated = deduplicateNotifications(notifications).slice(0, 50);
+    localStorage.setItem(key, JSON.stringify(deduplicated));
     window.dispatchEvent(new Event("notificationsUpdated"));
   } catch (error) {
     console.error("Failed to save notifications to localStorage", error);
@@ -216,20 +228,38 @@ export function clearAllNotifications(): void {
   saveStoredNotifications([]);
 }
 
-// Check and generate overdue and due soon alerts strictly WITHOUT duplicate creation
+// Check and generate overdue and due soon alerts strictly WITHOUT duplicate creation & auto-clean completed tasks
 export function syncSystemTaskNotifications(tasks: Task[]): void {
-  if (!Array.isArray(tasks) || tasks.length === 0) return;
+  if (!Array.isArray(tasks)) return;
   if (typeof window === "undefined") return;
 
   const settings = getAppSettings();
-  const current = getStoredNotifications();
+  let current = getStoredNotifications();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  let hasNew = false;
+  // Set of completed task IDs to clean up any obsolete overdue/due-soon alerts
+  const completedTaskIds = new Set(
+    tasks.filter((t) => t.status === "COMPLETED").map((t) => t.id)
+  );
+
+  // Clean up alerts for completed tasks
+  const beforeCount = current.length;
+  current = current.filter((n) => {
+    if (
+      (n.type === "TASK_OVERDUE" || n.type === "TASK_DUE_SOON") &&
+      n.taskId &&
+      completedTaskIds.has(n.taskId)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  let hasNew = beforeCount !== current.length;
   const newNotifs: NotificationItem[] = [];
 
   tasks.forEach((task) => {

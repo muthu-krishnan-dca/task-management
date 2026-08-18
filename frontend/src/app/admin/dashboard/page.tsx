@@ -8,6 +8,7 @@ import { TaskList } from "@/components/TaskList";
 import { Task, TaskPriority, TaskStatus } from "@/types/task";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
 import {
   createNotification,
@@ -120,6 +121,7 @@ export default function AdminDashboardPage() {
 
   // Toast message state
   const [toastMessage, setToastMessage] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3500);
@@ -229,8 +231,18 @@ export default function AdminDashboardPage() {
     loadNotifications();
 
     const handleNotifUpdate = () => loadNotifications();
+    const handleToggleSidebar = () => setIsMobileSidebarOpen((prev) => !prev);
+    const handleCloseSidebar = () => setIsMobileSidebarOpen(false);
+
     window.addEventListener("notificationsUpdated", handleNotifUpdate);
-    return () => window.removeEventListener("notificationsUpdated", handleNotifUpdate);
+    window.addEventListener("toggleMobileSidebar", handleToggleSidebar);
+    window.addEventListener("closeMobileSidebar", handleCloseSidebar);
+
+    return () => {
+      window.removeEventListener("notificationsUpdated", handleNotifUpdate);
+      window.removeEventListener("toggleMobileSidebar", handleToggleSidebar);
+      window.removeEventListener("closeMobileSidebar", handleCloseSidebar);
+    };
   }, []);
 
   // ----------------------------------------------------
@@ -705,18 +717,22 @@ export default function AdminDashboardPage() {
     showToast("Task data exported as JSON file! 📁");
   };
 
-  const handleConfirmResetWorkspace = () => {
+  const handleConfirmResetWorkspace = async () => {
     if (resetConfirmText.trim().toUpperCase() !== "RESET") {
       alert('Please type "RESET" in capital letters to confirm.');
       return;
     }
+
+    try {
+      await fetch(`${BACKEND_URL}/tasks`, { method: "DELETE" });
+    } catch {}
 
     clearAllNotifications();
     setNotifications([]);
     setTasks([]);
     setShowResetModal(false);
     setResetConfirmText("");
-    showToast("⚠️ Entire workspace data has been reset to defaults!");
+    showToast("⚠️ Entire workspace data has been cleared!");
   };
 
   return (
@@ -729,11 +745,23 @@ export default function AdminDashboardPage() {
         {/* ======================================================== */}
         {/* Dedicated Admin Sidebar matching specifications */}
         {/* ======================================================== */}
+        {/* Mobile Backdrop Overlay */}
+        {isMobileSidebarOpen && (
+          <div
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 md:hidden animate-fade-in"
+          />
+        )}
+
         <aside
-          className={`fixed left-0 top-0 h-screen w-64 border-r transition-colors duration-200 z-30 hidden md:flex flex-col justify-between ${
+          className={`fixed left-0 top-0 h-screen w-64 border-r transition-transform duration-300 z-50 flex flex-col justify-between ${
             darkMode
               ? "border-slate-800 bg-slate-900 text-slate-100"
               : "border-slate-200 bg-white text-slate-900"
+          } ${
+            isMobileSidebarOpen
+              ? "translate-x-0 shadow-2xl"
+              : "-translate-x-full md:translate-x-0"
           }`}
         >
           <div className="flex flex-col">
@@ -747,9 +775,19 @@ export default function AdminDashboardPage() {
                   AbleSpace
                 </span>
               </div>
-              <span className="rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-black text-[10px] px-2 py-0.5 border border-amber-300">
-                ADMIN
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-black text-[10px] px-2 py-0.5 border border-amber-300">
+                  ADMIN
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 md:hidden"
+                  aria-label="Close sidebar"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Navigation Menu */}
@@ -760,7 +798,10 @@ export default function AdminDashboardPage() {
                 </span>
                 <nav className="mt-2 space-y-1">
                   <button
-                    onClick={() => setActiveTab("dashboard")}
+                    onClick={() => {
+                      setActiveTab("dashboard");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "dashboard"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -772,7 +813,10 @@ export default function AdminDashboardPage() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab("users")}
+                    onClick={() => {
+                      setActiveTab("users");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "users"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -789,7 +833,10 @@ export default function AdminDashboardPage() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab("tasks")}
+                    onClick={() => {
+                      setActiveTab("tasks");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "tasks"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -806,7 +853,10 @@ export default function AdminDashboardPage() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab("notifications")}
+                    onClick={() => {
+                      setActiveTab("notifications");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "notifications"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -825,7 +875,10 @@ export default function AdminDashboardPage() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab("calendar")}
+                    onClick={() => {
+                      setActiveTab("calendar");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "calendar"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -837,7 +890,10 @@ export default function AdminDashboardPage() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab("analytics")}
+                    onClick={() => {
+                      setActiveTab("analytics");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "analytics"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -849,7 +905,10 @@ export default function AdminDashboardPage() {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab("settings")}
+                    onClick={() => {
+                      setActiveTab("settings");
+                      setIsMobileSidebarOpen(false);
+                    }}
                     className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition-all ${
                       activeTab === "settings"
                         ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
@@ -859,6 +918,17 @@ export default function AdminDashboardPage() {
                     <span className="text-base">⚙️</span>
                     <span>Settings</span>
                   </button>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                    <Link
+                      href="/Dashboard"
+                      onClick={() => setIsMobileSidebarOpen(false)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/60 transition-all"
+                    >
+                      <span className="text-base">🚀</span>
+                      <span>User Workspace</span>
+                    </Link>
+                  </div>
                 </nav>
               </div>
             </div>
@@ -899,6 +969,7 @@ export default function AdminDashboardPage() {
             onToggleTheme={toggleTheme}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleMobileMenu={() => setIsMobileSidebarOpen((prev) => !prev)}
           />
 
           <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">

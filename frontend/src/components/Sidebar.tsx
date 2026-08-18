@@ -144,6 +144,7 @@ export default function Sidebar({
             {/* Dashboard */}
             <Link
               href="/Dashboard"
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isDashboard
                   ? "bg-gray-100 dark:bg-gray-800 font-semibold text-gray-900 dark:text-white"
@@ -159,6 +160,7 @@ export default function Sidebar({
             {/* Tasks */}
             <Link
               href="/tasks"
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isTasks
                   ? "bg-gray-100 dark:bg-gray-800 font-semibold text-gray-900 dark:text-white"
@@ -174,6 +176,7 @@ export default function Sidebar({
             {/* Calendar */}
             <Link
               href="/calendar"
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 pathname.toLowerCase().includes("calendar")
                   ? "bg-gray-100 dark:bg-gray-800 font-semibold text-gray-900 dark:text-white"
@@ -189,6 +192,7 @@ export default function Sidebar({
             {/* Notifications */}
             <Link
               href="/notifications"
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 pathname.toLowerCase().includes("notifications")
                   ? "bg-gray-100 dark:bg-gray-800 font-semibold text-gray-900 dark:text-white"
@@ -207,9 +211,24 @@ export default function Sidebar({
           </p>
 
           <div className="space-y-1">
+            {/* Admin Console (visible to Admin) */}
+            {(profile.role === "Administrator" || profile.role === "Admin") && (
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-amber-600 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100 transition-colors"
+              >
+                <span className="flex h-5 w-5 items-center justify-center text-sm">
+                  👑
+                </span>
+                <span>Admin Dashboard</span>
+              </Link>
+            )}
+
             {/* Profile */}
             <Link
               href="/profile"
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isProfile
                   ? "bg-gray-100 dark:bg-gray-800 font-semibold text-gray-900 dark:text-white"
@@ -225,6 +244,7 @@ export default function Sidebar({
             {/* Settings */}
             <Link
               href="/settings"
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isSettings
                   ? "bg-gray-100 dark:bg-gray-800 font-semibold text-gray-900 dark:text-white"

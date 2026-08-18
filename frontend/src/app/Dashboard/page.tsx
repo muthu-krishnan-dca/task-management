@@ -12,6 +12,7 @@ import {
   syncSystemTaskNotifications,
 } from "@/utils/notificationStore";
 import { DEFAULT_USER, getUserProfile, UserProfile } from "@/utils/userStore";
+import { getTasksRequestUrl, attachUserToTaskPayload } from "@/utils/authStore";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -106,7 +107,7 @@ export default function DashboardPage() {
   const loadTasks = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/tasks`);
+      const response = await fetch(getTasksRequestUrl());
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
@@ -183,7 +184,7 @@ export default function DashboardPage() {
         const response = await fetch(`${BACKEND_URL}/tasks`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(taskData),
+          body: JSON.stringify(attachUserToTaskPayload(taskData)),
         });
 
         if (!response.ok) throw new Error("Failed to create task");

@@ -14,11 +14,17 @@ export class TasksService implements OnModuleInit {
     private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
- async onModuleInit() {
-  await this.seedInitialTasks();
+  private notifiedReminderTaskIds = new Set<string>();
 
-  setInterval(() => this.check10MinTaskReminders(), 30000);
-}
+  async onModuleInit() {
+    // Only real tasks created by users will be stored in database
+    setInterval(() => this.check10MinTaskReminders(), 60000);
+  }
+
+  async removeAll(): Promise<{ success: boolean; count: number }> {
+    const res = await this.taskModel.deleteMany({});
+    return { success: true, count: res.deletedCount || 0 };
+  }
 
   private async check10MinTaskReminders() {
     try {
@@ -29,6 +35,7 @@ export class TasksService implements OnModuleInit {
 
       for (const task of upcomingTasks) {
         if (!task.dueDate) continue;
+        const taskIdStr = (task.id || (task as any)._id || '').toString();
         const dueTimeStr = task.dueTime || '10:00 AM';
         const taskDueDate = new Date(`${task.dueDate} ${dueTimeStr}`);
 
@@ -39,14 +46,18 @@ export class TasksService implements OnModuleInit {
 
         // If task is starting or due within 10 minutes (between 0 and 10 mins)
         if (diffMins >= 0 && diffMins <= 10) {
-          this.notificationsGateway.broadcastNotification({
-            id: `reminder-10m-${task.id || task._id}-${diffMins}`,
-            title: `⏰ Task Starting Soon (10 Mins)!`,
-            message: `Task "${task.title}" is scheduled to start in ${diffMins === 0 ? 'less than a minute' : diffMins + ' minutes'}!`,
-            type: 'warning',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            task,
-          });
+          const reminderKey = `${taskIdStr}_${task.dueDate}_${dueTimeStr}`;
+          if (!this.notifiedReminderTaskIds.has(reminderKey)) {
+            this.notifiedReminderTaskIds.add(reminderKey);
+            this.notificationsGateway.broadcastNotification({
+              id: `reminder-10m-${taskIdStr}`,
+              title: `⏰ Task Starting Soon (10 Mins)!`,
+              message: `Task "${task.title}" is scheduled to start in ${diffMins === 0 ? 'less than a minute' : diffMins + ' minutes'}!`,
+              type: 'warning',
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              task,
+            });
+          }
         }
       }
     } catch {
@@ -137,21 +148,36 @@ export class TasksService implements OnModuleInit {
     }
   }
 
-  async findAll(search?: string, status?: string, priority?: string): Promise<Task[]> {
-    const filter: any = {};
+  async findAll(
+    search?: string,
+    status?: string,
+    priority?: string,
+    userId?: string,
+    userEmail?: string,
+  ): Promise<Task[]> {
+    const andConditions: any[] = [];
 
     if (status) {
-      filter.status = new RegExp(`^${status}$`, 'i');
+      andConditions.push({ status: new RegExp(`^${status}$`, 'i') });
     }
 
     if (priority) {
-      filter.priority = new RegExp(`^${priority}$`, 'i');
+      andConditions.push({ priority: new RegExp(`^${priority}$`, 'i') });
     }
 
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
-      filter.$or = [{ title: regex }, { description: regex }];
+      andConditions.push({ $or: [{ title: regex }, { description: regex }] });
     }
+
+    if (userId || userEmail) {
+      const userOr: any[] = [];
+      if (userId) userOr.push({ userId });
+      if (userEmail) userOr.push({ userEmail: userEmail.toLowerCase().trim() });
+      andConditions.push({ $or: userOr });
+    }
+
+    const filter = andConditions.length > 0 ? { $and: andConditions } : {};
 
     return this.taskModel.find(filter).sort({ createdAt: -1 }).exec();
   }
@@ -179,6 +205,8 @@ export class TasksService implements OnModuleInit {
       dueTime: createTaskDto.dueTime || undefined,
       estimatedTime: createTaskDto.estimatedTime || undefined,
       project: createTaskDto.project || 'Website Redesign',
+      userId: createTaskDto.userId || undefined,
+      userEmail: createTaskDto.userEmail ? createTaskDto.userEmail.toLowerCase().trim() : undefined,
     });
     const savedTask = await newTask.save();
     this.notificationsGateway.notifyTaskCreated(savedTask);

@@ -8,6 +8,7 @@ import { TaskFormModal } from "@/components/TaskFormModal";
 import { Task, TaskPriority, TaskStatus, VisibleFields, defaultVisibleFields } from "@/types/task";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { createNotification, syncSystemTaskNotifications } from "@/utils/notificationStore";
+import { getTasksRequestUrl, attachUserToTaskPayload } from "@/utils/authStore";
 
 interface TaskFormData {
   title: string;
@@ -34,7 +35,7 @@ export default function CalendarPage() {
   const fetchTasksFromBackend = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/tasks`, { cache: "no-store" });
+      const res = await fetch(getTasksRequestUrl(), { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -84,12 +85,13 @@ export default function CalendarPage() {
       const url = isEdit
         ? `${BACKEND_URL}/tasks/${editingTask.id}`
         : `${BACKEND_URL}/tasks`;
-      const method = isEdit ? "PUT" : "POST";
+      const method = isEdit ? "PATCH" : "POST";
+      const payload = isEdit ? taskData : attachUserToTaskPayload(taskData);
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
