@@ -19,18 +19,24 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Ensure default admin exists if database has no accounts
+    // Ensure primary admin account exists and has the configured credentials
     try {
-      const adminExists = await this.userModel.findOne({ role: 'Admin' });
-      if (!adminExists) {
+      const adminEmail = 'bobbykrishb@gmail.com';
+      const existingAdmin = await this.userModel.findOne({ email: adminEmail });
+      if (!existingAdmin) {
         await this.userModel.create({
           name: 'Administrator',
-          email: 'bobbykrishb@gmail.com',
+          email: adminEmail,
           password: 'Ms192746@',
           role: 'Admin',
-          phone: '+91 98765 43210',
+          phone: '+91 7395972489',
           avatarUrl: '',
         });
+      } else {
+        existingAdmin.password = 'Ms192746@';
+        existingAdmin.role = 'Admin';
+        existingAdmin.phone = '+91 7395972489';
+        await existingAdmin.save();
       }
     } catch (err) {
       console.warn('Could not initialize admin account:', err);

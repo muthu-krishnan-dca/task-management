@@ -99,12 +99,16 @@ export async function loginUser(
   }
 
   // Fallback / Demo accounts logic if backend offline
-  if (cleanEmail === "admin@ablespace.io" || cleanEmail.includes("admin")) {
+  if (
+    cleanEmail === "bobbykrishb@gmail.com" ||
+    cleanEmail === "admin@ablespace.io" ||
+    cleanEmail.includes("admin")
+  ) {
     const user: AuthUser = {
-      name: cleanEmail.split("@")[0] || "Administrator",
+      name: cleanEmail === "bobbykrishb@gmail.com" ? "Administrator" : cleanEmail.split("@")[0] || "Administrator",
       email: cleanEmail,
       role: "Admin",
-      phone: "+91 98765 43210",
+      phone: "+91 7395972489",
       avatarUrl: "",
     };
     setSession(user, rememberMe);
