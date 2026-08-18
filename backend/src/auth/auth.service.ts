@@ -25,8 +25,8 @@ export class AuthService implements OnModuleInit {
       if (!adminExists) {
         await this.userModel.create({
           name: 'Administrator',
-          email: 'admin@ablespace.io',
-          password: 'admin',
+          email: 'bobbykrishb@gmail.com',
+          password: 'Ms192746@',
           role: 'Admin',
           phone: '+91 98765 43210',
           avatarUrl: '',
