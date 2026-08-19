@@ -134,15 +134,21 @@ export class AuthService implements OnModuleInit {
 
     if (userSmtp && passSmtp) {
       try {
+        const isGmail = hostSmtp.includes('gmail') || userSmtp.includes('gmail');
         const transporter = nodemailer.createTransport({
-          host: hostSmtp,
+          service: isGmail ? 'gmail' : undefined,
+          host: isGmail ? undefined : hostSmtp,
           port: portSmtp,
           secure: portSmtp === 465,
           auth: {
             user: userSmtp,
             pass: passSmtp,
           },
-        });
+          tls: {
+            rejectUnauthorized: false,
+          },
+          family: 4, // Force IPv4 to prevent ENETUNREACH on Render/Cloud hosts
+        } as any);
 
         await transporter.sendMail({
           from: fromSmtp,
