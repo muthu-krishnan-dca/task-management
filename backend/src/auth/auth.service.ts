@@ -125,14 +125,95 @@ export class AuthService implements OnModuleInit {
 
     this.otpStore.set(cleanEmail, { otp, expiresAt });
 
-    // Dispatch real email via Nodemailer SMTP
+    const htmlEmail = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; border: 1px solid #e2e8f0; border-radius: 20px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #ffffff; padding: 10px 22px; border-radius: 12px; font-weight: 800; font-size: 20px; letter-spacing: 0.5px;">
+            AbleSpace
+          </div>
+        </div>
+        <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 12px; text-align: center;">Reset Your Password</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 24px;">
+          Hello <strong>${user.name || 'User'}</strong>,<br/>
+          We received a request to reset your password for your AbleSpace account (<strong>${cleanEmail}</strong>).
+        </p>
+        <div style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 2px dashed #8b5cf6; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <span style="display: block; font-size: 12px; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Your 6-Digit OTP Code</span>
+          <span style="font-size: 38px; font-weight: 900; letter-spacing: 10px; color: #5b21b6; font-family: monospace; display: inline-block; padding: 4px 12px;">${otp}</span>
+          <p style="color: #7c3aed; font-size: 12px; font-weight: 600; margin-top: 10px; margin-bottom: 0;">⏱️ Valid for 5 minutes only</p>
+        </div>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center; margin-bottom: 20px;">
+          Enter this code on the password reset page to choose a new password. If you didn't request this code, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+        <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">
+          © 2026 AbleSpace Task Management System. All rights reserved.
+        </p>
+      </div>
+    `;
+
     const userSmtp = process.env.SMTP_USER || process.env.EMAIL_USER;
     const passSmtp = process.env.SMTP_PASS || process.env.EMAIL_PASS;
     const hostSmtp = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const portSmtp = parseInt(process.env.SMTP_PORT || '587', 10);
-    const fromSmtp = process.env.SMTP_FROM || `"AbleSpace Security" <${userSmtp || 'no-reply@ablespace.io'}>`;
+    const portSmtp = parseInt(process.env.SMTP_PORT || '465', 10);
+    const fromSmtp = process.env.SMTP_FROM || `"AbleSpace Security" <${userSmtp || 'taskmanagement.able@gmail.com'}>`;
 
-    if (userSmtp && passSmtp) {
+    // 1. Check for HTTP-based Email Providers first (Bypasses all Cloud Firewall/SMTP Blocks)
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const brevoApiKey = process.env.BREVO_API_KEY;
+    let emailSent = false;
+
+    if (resendApiKey) {
+      try {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM || 'AbleSpace <onboarding@resend.dev>',
+            to: [cleanEmail],
+            subject: `${otp} is your AbleSpace Verification Code`,
+            html: htmlEmail,
+          }),
+        });
+        const resData = await res.json().catch(() => ({}));
+        if (res.ok) {
+          console.log(`[Resend API] Successfully sent OTP email to ${cleanEmail}`);
+          emailSent = true;
+        } else {
+          console.error('[Resend API] Error:', resData);
+        }
+      } catch (httpErr) {
+        console.error('[Resend API] Request failed:', httpErr);
+      }
+    } else if (brevoApiKey) {
+      try {
+        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': brevoApiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sender: { name: 'AbleSpace Security', email: userSmtp || 'taskmanagement.able@gmail.com' },
+            to: [{ email: cleanEmail }],
+            subject: `${otp} is your AbleSpace Verification Code`,
+            htmlContent: htmlEmail,
+          }),
+        });
+        if (res.ok) {
+          console.log(`[Brevo API] Successfully sent OTP email to ${cleanEmail}`);
+          emailSent = true;
+        }
+      } catch (httpErr) {
+        console.error('[Brevo API] Request failed:', httpErr);
+      }
+    }
+
+    // 2. Fallback to Nodemailer SMTP
+    if (!emailSent && userSmtp && passSmtp) {
       try {
         const isGmail = hostSmtp.includes('gmail') || userSmtp.includes('gmail');
         const transporter = nodemailer.createTransport({
@@ -147,47 +228,25 @@ export class AuthService implements OnModuleInit {
           tls: {
             rejectUnauthorized: false,
           },
-          family: 4, // Force IPv4 to prevent ENETUNREACH on Render/Cloud hosts
+          family: 4,
         } as any);
 
         await transporter.sendMail({
           from: fromSmtp,
           to: cleanEmail,
           subject: `${otp} is your AbleSpace Verification Code`,
-          html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; border: 1px solid #e2e8f0; border-radius: 20px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-              <div style="text-align: center; margin-bottom: 28px;">
-                <div style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #ffffff; padding: 10px 22px; border-radius: 12px; font-weight: 800; font-size: 20px; letter-spacing: 0.5px;">
-                  AbleSpace
-                </div>
-              </div>
-              <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 12px; text-align: center;">Reset Your Password</h2>
-              <p style="color: #475569; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 24px;">
-                Hello <strong>${user.name || 'User'}</strong>,<br/>
-                We received a request to reset your password for your AbleSpace account (<strong>${cleanEmail}</strong>).
-              </p>
-              <div style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 2px dashed #8b5cf6; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 24px;">
-                <span style="display: block; font-size: 12px; font-weight: 700; color: #6d28d9; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Your 6-Digit OTP Code</span>
-                <span style="font-size: 38px; font-weight: 900; letter-spacing: 10px; color: #5b21b6; font-family: monospace; display: inline-block; padding: 4px 12px;">${otp}</span>
-                <p style="color: #7c3aed; font-size: 12px; font-weight: 600; margin-top: 10px; margin-bottom: 0;">⏱️ Valid for 5 minutes only</p>
-              </div>
-              <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center; margin-bottom: 20px;">
-                Enter this code on the password reset page to choose a new password. If you didn't request this code, you can safely ignore this email.
-              </p>
-              <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
-              <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">
-                © 2026 AbleSpace Task Management System. All rights reserved.
-              </p>
-            </div>
-          `,
+          html: htmlEmail,
         });
         console.log(`[SMTP] Successfully dispatched real OTP email to ${cleanEmail}`);
+        emailSent = true;
       } catch (mailError) {
         console.error('[SMTP] Error sending email via SMTP:', mailError);
       }
-    } else {
+    }
+
+    if (!emailSent) {
       console.warn(
-        `[SMTP] SMTP_USER & SMTP_PASS not set in backend/.env. OTP for ${cleanEmail} is: ${otp}`
+        `[OTP] OTP for ${cleanEmail} is: ${otp}`
       );
     }
 
